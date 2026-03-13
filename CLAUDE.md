@@ -23,6 +23,7 @@ pnpm install              # Install dependencies
 pnpm run dev              # Dev server at localhost:5173
 pnpm run build            # Static build to /build
 pnpm run preview          # Preview production build
+pnpm run check            # Type check (svelte-kit sync + svelte-check)
 ```
 
 ## Architecture
