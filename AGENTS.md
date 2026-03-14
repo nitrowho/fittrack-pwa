@@ -52,6 +52,19 @@ SvelteKit file-based routing: `/` (home/dashboard), `/workout/[id]`, `/history`,
 
 German locale: comma for decimal separator ("62,5 kg"), period for thousands ("1.250 kg"), German date format ("15. Marz 2026, 10:30").
 
+### Development Rules
+
+Follow these architecture rules for all new code and when touching existing code:
+
+- Use layered dependencies: `routes/components -> stores or feature controllers -> application commands/queries -> repositories -> db`.
+- Do not import Dexie or `db` directly in `src/routes/**` or `src/lib/components/**`.
+- Do not add new direct Dexie access in `src/lib/stores/**`; stores manage reactive UI state and call dedicated methods.
+- Keep business logic pure where possible. Progression, validation, volume, and similar rules should not read IndexedDB or browser APIs directly.
+- Multi-table writes, snapshot creation, and cascade deletes must live in application/repository code and use explicit transactions.
+- Prefer feature-level methods such as `getDashboardData()`, `saveTemplate()`, or `startWorkout()` over table-level access.
+- Keep all user-visible text in German and use shared formatter helpers for dates, weights, and volume.
+- Migrate incrementally. Do not do a big-bang rewrite, but do not introduce new code that bypasses these boundaries.
+
 ## Key Design Decisions
 
 - Screen wake lock during active workouts (`navigator.wakeLock`)
@@ -74,3 +87,4 @@ German locale: comma for decimal separator ("62,5 kg"), period for thousands ("1
 - `docs/seed-data.md` — First-launch seed exercises and templates
 - `docs/migration.md` — iOS migration path and development/deployment
 - `docs/TrainingPlan.md` — The actual workout plan (seed data source)
+- `docs/development-rules.md` — Coding guidelines, architecture layers, dependency rules, and migration direction
