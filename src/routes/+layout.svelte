@@ -3,12 +3,12 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { pwaInfo } from 'virtual:pwa-info';
 	import { onMount } from 'svelte';
-	import { initializeApp } from '$lib/application/app/initialize.js';
+	import { appStore } from '$lib/stores/app.svelte.js';
 
 	let { children } = $props();
 
 	onMount(async () => {
-		await initializeApp();
+		await appStore.initialize();
 	});
 </script>
 

@@ -6,10 +6,53 @@
 		restoreBackupFile
 	} from '$lib/application/settings/commands.js';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { appStore } from '$lib/stores/app.svelte.js';
 
 	let showRestoreDialog = $state(false);
 	let selectedFile = $state<File | null>(null);
 	let statusMessage = $state('');
+
+	type StorageStatusCopy = {
+		title: string;
+		description: string;
+		classes: string;
+	};
+
+	function getStorageStatusCopy(): StorageStatusCopy {
+		switch (appStore.storagePersistence.status) {
+			case 'granted':
+				return {
+					title: 'Dauerhafte Speicherung aktiv',
+					description:
+						'Dieses Geraet hat bestaetigt, dass lokale App-Daten nicht automatisch durch Speicherbereinigung entfernt werden.',
+					classes:
+						'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+				};
+			case 'best-effort':
+				return {
+					title: 'Dauerhafte Speicherung nicht bestaetigt',
+					description:
+						'Die Daten bleiben lokal gespeichert, koennen auf dem iPhone aber unter Umstaenden durch den Browser entfernt werden. Ein Backup ist empfohlen.',
+					classes: 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+				};
+			case 'unsupported':
+				return {
+					title: 'Dauerhafte Speicherung nicht verfuegbar',
+					description:
+						'Dieser Browser unterstuetzt keine bestaetigte Dauer-Speicherung. Die Daten liegen weiterhin lokal im Browser.',
+					classes: 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
+				};
+			default:
+				return {
+					title: 'Speicherstatus wird geprueft',
+					description:
+						'Die App prueft, ob der Browser dauerhafte Speicherung fuer lokale Daten erlaubt.',
+					classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+				};
+		}
+	}
+
+	let storageStatus = $derived(getStorageStatusCopy());
 
 	function handleFileSelect(e: Event) {
 		const input = e.target as HTMLInputElement;
@@ -64,6 +107,10 @@
 	<!-- Backup -->
 	<section class="space-y-3">
 		<h2 class="text-lg font-semibold">Backup</h2>
+		<div class={`rounded-2xl p-4 text-sm ${storageStatus.classes}`}>
+			<h3 class="font-medium">{storageStatus.title}</h3>
+			<p class="mt-1 text-xs opacity-80">{storageStatus.description}</p>
+		</div>
 		<button
 			onclick={handleBackup}
 			class="w-full rounded-2xl bg-white p-4 text-left shadow-sm dark:bg-gray-900"
