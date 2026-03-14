@@ -1,45 +1,28 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { db } from '$lib/db/database.js';
-	import { formatDate, formatDuration, formatVolume, formatVolumeDelta, formatWeight } from '$lib/services/formatter.js';
+	import {
+		getHistorySessionDetail,
+		type HistoryExerciseSessionDetail
+	} from '$lib/application/history/queries.js';
+	import { formatDate, formatDuration, formatVolume, formatWeight } from '$lib/services/formatter.js';
 	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
-	import type { WorkoutSession, ExerciseSession, ExerciseSet } from '$lib/models/types.js';
+	import type { WorkoutSession } from '$lib/models/types.js';
 
 	let session = $state<WorkoutSession | null>(null);
-	let exerciseSessions = $state<ExerciseSession[]>([]);
-	let setsMap = $state<Map<string, ExerciseSet[]>>(new Map());
+	let exerciseSessions = $state<HistoryExerciseSessionDetail[]>([]);
 	let totalVolume = $state(0);
 	let duration = $state(0);
 
 	onMount(async () => {
 		const id = page.params.id as string;
-		session = (await db.workoutSessions.get(id)) ?? null;
-		if (!session) return;
+		const detail = await getHistorySessionDetail(id);
+		if (!detail) return;
 
-		exerciseSessions = await db.exerciseSessions
-			.where('workoutSessionId')
-			.equals(id)
-			.sortBy('sortOrder');
-
-		let vol = 0;
-		const map = new Map<string, ExerciseSet[]>();
-		for (const es of exerciseSessions) {
-			const sets = await db.exerciseSets
-				.where('exerciseSessionId')
-				.equals(es.id)
-				.sortBy('setNumber');
-			map.set(es.id, sets);
-			for (const set of sets) {
-				if (set.isCompleted) vol += set.weight * set.reps;
-			}
-		}
-		setsMap = map;
-		totalVolume = vol;
-
-		if (session.completedAt) {
-			duration = (session.completedAt.getTime() - session.startedAt.getTime()) / 1000;
-		}
+		session = detail.session;
+		exerciseSessions = detail.exerciseSessions;
+		totalVolume = detail.totalVolume;
+		duration = detail.duration;
 	});
 </script>
 
@@ -62,15 +45,14 @@
 			</div>
 		</div>
 
-		{#each exerciseSessions as es}
-			{@const sets = setsMap.get(es.id) ?? []}
+		{#each exerciseSessions as entry}
 			<div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
 				<div class="flex items-center gap-2">
-					<h3 class="font-semibold">{es.exerciseName}</h3>
-					<MuscleGroupBadge muscleGroup={es.muscleGroup} />
+					<h3 class="font-semibold">{entry.exerciseSession.exerciseName}</h3>
+					<MuscleGroupBadge muscleGroup={entry.exerciseSession.muscleGroup} />
 				</div>
 				<div class="mt-2 space-y-1">
-					{#each sets as set}
+					{#each entry.sets as set}
 						{#if set.isCompleted}
 							<div class="flex gap-3 text-sm">
 								<span class="w-6 text-gray-400">{set.setNumber}.</span>

@@ -1,6 +1,10 @@
 <script lang="ts">
-	import { downloadBackup, restoreBackup } from '$lib/db/backup.js';
-	import { exportCSV, exportJSON, downloadFile } from '$lib/services/export.js';
+	import {
+		downloadBackupFile,
+		downloadCsvExport,
+		downloadJsonExport,
+		restoreBackupFile
+	} from '$lib/application/settings/commands.js';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let showRestoreDialog = $state(false);
@@ -17,7 +21,7 @@
 
 	async function handleBackup() {
 		try {
-			await downloadBackup();
+			await downloadBackupFile();
 			statusMessage = 'Backup erstellt';
 		} catch {
 			statusMessage = 'Fehler beim Erstellen des Backups';
@@ -28,7 +32,7 @@
 	async function handleRestore() {
 		if (!selectedFile) return;
 		try {
-			await restoreBackup(selectedFile);
+			await restoreBackupFile(selectedFile);
 			statusMessage = 'Backup wiederhergestellt';
 			showRestoreDialog = false;
 			selectedFile = null;
@@ -40,15 +44,11 @@
 	}
 
 	async function handleExportCSV() {
-		const blob = await exportCSV();
-		const date = new Date().toISOString().split('T')[0];
-		downloadFile(blob, `fittrack-export-${date}.csv`);
+		await downloadCsvExport();
 	}
 
 	async function handleExportJSON() {
-		const blob = await exportJSON();
-		const date = new Date().toISOString().split('T')[0];
-		downloadFile(blob, `fittrack-export-${date}.json`);
+		await downloadJsonExport();
 	}
 </script>
 

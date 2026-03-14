@@ -3,12 +3,12 @@
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import { pwaInfo } from 'virtual:pwa-info';
 	import { onMount } from 'svelte';
-	import { seedDatabase } from '$lib/db/seed.js';
+	import { initializeApp } from '$lib/application/app/initialize.js';
 
 	let { children } = $props();
 
 	onMount(async () => {
-		await seedDatabase();
+		await initializeApp();
 	});
 </script>
 
