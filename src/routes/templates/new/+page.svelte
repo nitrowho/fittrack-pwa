@@ -1,27 +1,20 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { db } from '$lib/db/database.js';
+	import { createTemplate } from '$lib/application/templates/commands.js';
+	import { listTemplateFormExercises } from '$lib/application/templates/queries.js';
+	import type { TemplateExerciseInput } from '$lib/application/templates/types.js';
 	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
-	import type { Exercise, TemplateExercise } from '$lib/models/types.js';
-	import { MUSCLE_GROUP_LABELS, type MuscleGroup } from '$lib/models/types.js';
+	import type { Exercise } from '$lib/models/types.js';
 
 	let name = $state('');
 	let exercises = $state<Exercise[]>([]);
-	let selectedExercises = $state<
-		{
-			exerciseId: string;
-			targetSets: number;
-			repRangeLower: number;
-			repRangeUpper: number;
-			restDurationSeconds: number;
-		}[]
-	>([]);
+	let selectedExercises = $state<TemplateExerciseInput[]>([]);
 	let searchQuery = $state('');
 	let showPicker = $state(false);
 
 	onMount(async () => {
-		exercises = await db.exercises.toArray();
+		exercises = await listTemplateFormExercises();
 	});
 
 	let filteredExercises = $derived(
@@ -83,32 +76,7 @@
 	async function save() {
 		if (!name.trim() || selectedExercises.length === 0) return;
 
-		const templateCount = await db.workoutTemplates.count();
-		const templateId = crypto.randomUUID();
-
-		await db.transaction('rw', [db.workoutTemplates, db.templateExercises], async () => {
-			await db.workoutTemplates.add({
-				id: templateId,
-				name: name.trim(),
-				sortOrder: templateCount,
-				createdAt: new Date()
-			});
-
-			for (let i = 0; i < selectedExercises.length; i++) {
-				const se = selectedExercises[i];
-				await db.templateExercises.add({
-					id: crypto.randomUUID(),
-					templateId,
-					exerciseId: se.exerciseId,
-					sortOrder: i,
-					targetSets: se.targetSets,
-					repRangeLower: se.repRangeLower,
-					repRangeUpper: se.repRangeUpper,
-					restDurationSeconds: se.restDurationSeconds
-				});
-			}
-		});
-
+		await createTemplate({ name, exercises: selectedExercises });
 		goto('/templates');
 	}
 </script>

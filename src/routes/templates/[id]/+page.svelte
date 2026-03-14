@@ -2,35 +2,28 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { db, deleteWorkoutTemplate } from '$lib/db/database.js';
+	import { deleteTemplate } from '$lib/application/templates/commands.js';
+	import { getTemplateDetail } from '$lib/application/templates/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { formatSetsReps, formatRestDuration } from '$lib/services/formatter.js';
 	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import type { WorkoutTemplate, TemplateExercise, Exercise } from '$lib/models/types.js';
+	import type { WorkoutTemplate } from '$lib/models/types.js';
 
 	let template = $state<WorkoutTemplate | null>(null);
-	let templateExercises = $state<(TemplateExercise & { exercise: Exercise | null })[]>([]);
+	let templateExercises = $state<Awaited<ReturnType<typeof getTemplateDetail>>['exercises']>([]);
 	let showDeleteDialog = $state(false);
 
 	onMount(async () => {
 		const id = page.params.id as string;
-		template = (await db.workoutTemplates.get(id)) ?? null;
-		if (!template) return;
-
-		const tes = await db.templateExercises.where('templateId').equals(id).sortBy('sortOrder');
-		const exercises = await db.exercises.toArray();
-		const exerciseMap = new Map(exercises.map((e) => [e.id, e]));
-
-		templateExercises = tes.map((te) => ({
-			...te,
-			exercise: exerciseMap.get(te.exerciseId) ?? null
-		}));
+		const detail = await getTemplateDetail(id);
+		template = detail.template;
+		templateExercises = detail.exercises;
 	});
 
 	async function handleDelete() {
 		if (!template) return;
-		await deleteWorkoutTemplate(template.id);
+		await deleteTemplate(template.id);
 		goto('/templates');
 	}
 

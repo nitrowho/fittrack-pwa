@@ -2,43 +2,28 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { db } from '$lib/db/database.js';
+	import { updateTemplate } from '$lib/application/templates/commands.js';
+	import { getTemplateEditorData } from '$lib/application/templates/queries.js';
+	import type { TemplateExerciseInput } from '$lib/application/templates/types.js';
 	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
 	import type { Exercise, WorkoutTemplate } from '$lib/models/types.js';
 
 	let template = $state<WorkoutTemplate | null>(null);
 	let name = $state('');
 	let exercises = $state<Exercise[]>([]);
-	let selectedExercises = $state<
-		{
-			id?: string;
-			exerciseId: string;
-			targetSets: number;
-			repRangeLower: number;
-			repRangeUpper: number;
-			restDurationSeconds: number;
-		}[]
-	>([]);
+	let selectedExercises = $state<TemplateExerciseInput[]>([]);
 	let searchQuery = $state('');
 	let showPicker = $state(false);
 
 	onMount(async () => {
 		const id = page.params.id as string;
-		template = (await db.workoutTemplates.get(id)) ?? null;
-		if (!template) return;
+		const editorData = await getTemplateEditorData(id);
+		if (!editorData) return;
 
-		name = template.name;
-		exercises = await db.exercises.toArray();
-
-		const tes = await db.templateExercises.where('templateId').equals(id).sortBy('sortOrder');
-		selectedExercises = tes.map((te) => ({
-			id: te.id,
-			exerciseId: te.exerciseId,
-			targetSets: te.targetSets,
-			repRangeLower: te.repRangeLower,
-			repRangeUpper: te.repRangeUpper,
-			restDurationSeconds: te.restDurationSeconds
-		}));
+		template = editorData.template;
+		name = editorData.template.name;
+		exercises = editorData.availableExercises;
+		selectedExercises = editorData.selectedExercises;
 	});
 
 	let filteredExercises = $derived(
@@ -89,27 +74,7 @@
 	async function save() {
 		if (!template || !name.trim() || selectedExercises.length === 0) return;
 
-		await db.transaction('rw', [db.workoutTemplates, db.templateExercises], async () => {
-			await db.workoutTemplates.update(template!.id, { name: name.trim() });
-
-			// Delete existing template exercises
-			await db.templateExercises.where('templateId').equals(template!.id).delete();
-
-			// Add updated exercises
-			for (let i = 0; i < selectedExercises.length; i++) {
-				const se = selectedExercises[i];
-				await db.templateExercises.add({
-					id: crypto.randomUUID(),
-					templateId: template!.id,
-					exerciseId: se.exerciseId,
-					sortOrder: i,
-					targetSets: se.targetSets,
-					repRangeLower: se.repRangeLower,
-					repRangeUpper: se.repRangeUpper,
-					restDurationSeconds: se.restDurationSeconds
-				});
-			}
-		});
+		await updateTemplate({ id: template.id, name, exercises: selectedExercises });
 
 		goto(`/templates/${template.id}`);
 	}

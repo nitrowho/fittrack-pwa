@@ -1,46 +1,22 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { db } from '$lib/db/database.js';
+	import { getDashboardData, type DashboardTemplate } from '$lib/application/dashboard/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
-	import { formatShortDate, formatDuration, formatVolume } from '$lib/services/formatter.js';
-	import type { WorkoutTemplate, WorkoutSession, TemplateExercise } from '$lib/models/types.js';
+	import { formatShortDate, formatDuration } from '$lib/services/formatter.js';
+	import type { WorkoutSession } from '$lib/models/types.js';
 
-	let templates = $state<WorkoutTemplate[]>([]);
-	let templateExercises = $state<Map<string, (TemplateExercise & { exerciseName: string })[]>>(new Map());
+	let templates = $state<DashboardTemplate[]>([]);
 	let recentSessions = $state<WorkoutSession[]>([]);
 	let inProgressSession = $state<WorkoutSession | null>(null);
 	let lastCompletedTemplateId = $state<string | null>(null);
 
 	onMount(async () => {
-		templates = await db.workoutTemplates.orderBy('sortOrder').toArray();
-
-		const exercises = await db.exercises.toArray();
-		const exerciseMap = new Map(exercises.map((e) => [e.id, e]));
-
-		const teMap = new Map<string, (TemplateExercise & { exerciseName: string })[]>();
-		for (const t of templates) {
-			const tes = await db.templateExercises.where('templateId').equals(t.id).sortBy('sortOrder');
-			teMap.set(
-				t.id,
-				tes.map((te) => ({
-					...te,
-					exerciseName: exerciseMap.get(te.exerciseId)?.name ?? 'Unknown'
-				}))
-			);
-		}
-		templateExercises = teMap;
-
-		// Check for in-progress workout
-		const allSessions = await db.workoutSessions.toArray();
-		inProgressSession = allSessions.find((s) => s.completedAt === null) ?? null;
-
-		// Recent completed sessions
-		const completed = allSessions
-			.filter((s) => s.completedAt !== null)
-			.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
-		recentSessions = completed.slice(0, 3);
-		lastCompletedTemplateId = completed[0]?.templateId ?? null;
+		const dashboard = await getDashboardData();
+		templates = dashboard.templates;
+		recentSessions = dashboard.recentSessions;
+		inProgressSession = dashboard.inProgressSession;
+		lastCompletedTemplateId = dashboard.lastCompletedTemplateId;
 	});
 
 	async function startWorkout(templateId: string) {
@@ -75,13 +51,12 @@
 
 	<!-- Quick start -->
 	<section>
-		<h2 class="mb-3 text-lg font-semibold">Workout starten</h2>
-		<div class="space-y-3">
-			{#each templates as template}
-				{@const exercises = templateExercises.get(template.id) ?? []}
-				<button
-					onclick={() => startWorkout(template.id)}
-					disabled={inProgressSession !== null}
+			<h2 class="mb-3 text-lg font-semibold">Workout starten</h2>
+			<div class="space-y-3">
+				{#each templates as template}
+					<button
+						onclick={() => startWorkout(template.id)}
+						disabled={inProgressSession !== null}
 					class="w-full rounded-2xl bg-white p-4 text-left shadow-sm disabled:opacity-50 dark:bg-gray-900 {suggestedId === template.id && !inProgressSession
 						? 'ring-2 ring-blue-500'
 						: ''}"
@@ -95,7 +70,7 @@
 						{/if}
 					</div>
 					<p class="mt-1 text-sm text-gray-500">
-						{exercises.map((e) => e.exerciseName).join(', ')}
+						{template.exerciseNames.join(', ')}
 					</p>
 				</button>
 			{/each}

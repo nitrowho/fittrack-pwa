@@ -1,19 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { db } from '$lib/db/database.js';
-	import type { WorkoutTemplate, TemplateExercise } from '$lib/models/types.js';
+	import { listTemplatesWithCounts } from '$lib/application/templates/queries.js';
+	import type { TemplateSummary } from '$lib/application/templates/types.js';
 
-	let templates = $state<WorkoutTemplate[]>([]);
-	let exerciseCounts = $state<Map<string, number>>(new Map());
+	let templates = $state<TemplateSummary[]>([]);
 
 	onMount(async () => {
-		templates = await db.workoutTemplates.orderBy('sortOrder').toArray();
-		const counts = new Map<string, number>();
-		for (const t of templates) {
-			const count = await db.templateExercises.where('templateId').equals(t.id).count();
-			counts.set(t.id, count);
-		}
-		exerciseCounts = counts;
+		templates = await listTemplatesWithCounts();
 	});
 </script>
 
@@ -32,14 +25,14 @@
 		<p class="text-sm text-gray-500">Keine Vorlagen vorhanden</p>
 	{:else}
 		<div class="space-y-2">
-			{#each templates as template}
+			{#each templates as item}
 				<a
-					href="/templates/{template.id}"
+					href="/templates/{item.template.id}"
 					class="block rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900"
 				>
-					<h3 class="font-semibold">{template.name}</h3>
+					<h3 class="font-semibold">{item.template.name}</h3>
 					<p class="mt-0.5 text-xs text-gray-500">
-						{exerciseCounts.get(template.id) ?? 0} Übungen
+						{item.exerciseCount} Übungen
 					</p>
 				</a>
 			{/each}
