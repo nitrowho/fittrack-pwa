@@ -88,11 +88,15 @@ class WorkoutStore {
 
 		const exerciseSessionId = this.findExerciseSessionForSet(setId);
 		if (exerciseSessionId) {
-			const exerciseSession = this.exerciseSessions.find(
-				(item) => item.id === exerciseSessionId
-			);
-			if (exerciseSession) {
-				timerStore.startRestTimer(exerciseSessionId, exerciseSession.restDurationSeconds);
+			const exerciseSets = this.sets.get(exerciseSessionId) ?? [];
+			const allSetsCompleted = exerciseSets.every((set) => set.isCompleted);
+			if (!allSetsCompleted) {
+				const exerciseSession = this.exerciseSessions.find(
+					(item) => item.id === exerciseSessionId
+				);
+				if (exerciseSession) {
+					timerStore.startRestTimer(exerciseSessionId, exerciseSession.restDurationSeconds);
+				}
 			}
 		}
 
