@@ -65,6 +65,12 @@ Follow these architecture rules for all new code and when touching existing code
 - Keep all user-visible text in German and use shared formatter helpers for dates, weights, and volume.
 - Migrate incrementally. Do not do a big-bang rewrite, but do not introduce new code that bypasses these boundaries.
 
+### Git Commits
+
+- Commit messages must start with a short category prefix followed by a colon.
+- Prefer concise prefixes such as `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, or `style:`.
+- Example: `docs: add architecture development rules`
+
 ## Key Design Decisions
 
 - Screen wake lock during active workouts (`navigator.wakeLock`)
