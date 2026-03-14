@@ -1,0 +1,32 @@
+import type { MuscleGroup } from '$lib/models/types.js';
+import {
+	createExercise,
+	deleteExercise as deleteExerciseRecord,
+	updateExercise
+} from '$lib/repositories/exercise-repository.js';
+
+export interface SaveExerciseInput {
+	id?: string;
+	name: string;
+	muscleGroup: MuscleGroup | null;
+}
+
+export async function saveExercise(input: SaveExerciseInput): Promise<string> {
+	const name = input.name.trim();
+	if (!name) {
+		throw new Error('Übungsname fehlt');
+	}
+
+	if (input.id) {
+		await updateExercise(input.id, { name, muscleGroup: input.muscleGroup });
+		return input.id;
+	}
+
+	const id = crypto.randomUUID();
+	await createExercise({ id, name, muscleGroup: input.muscleGroup });
+	return id;
+}
+
+export async function deleteExercise(id: string): Promise<void> {
+	await deleteExerciseRecord(id);
+}

@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { db, deleteExercise } from '$lib/db/database.js';
-	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
+	import {
+		deleteExercise,
+		saveExercise as persistExercise
+	} from '$lib/application/exercises/commands.js';
+	import { listExercises } from '$lib/application/exercises/queries.js';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { MUSCLE_GROUP_LABELS, type MuscleGroup, type Exercise } from '$lib/models/types.js';
 
@@ -17,7 +20,7 @@
 	onMount(loadExercises);
 
 	async function loadExercises() {
-		exercises = await db.exercises.orderBy('name').toArray();
+		exercises = await listExercises();
 	}
 
 	let grouped = $derived(() => {
@@ -45,20 +48,11 @@
 		showForm = true;
 	}
 
-	async function saveExercise() {
+	async function handleSaveExercise() {
 		if (!formName.trim()) return;
 
 		const mg = formMuscleGroup || null;
-
-		if (editingId) {
-			await db.exercises.update(editingId, { name: formName.trim(), muscleGroup: mg });
-		} else {
-			await db.exercises.add({
-				id: crypto.randomUUID(),
-				name: formName.trim(),
-				muscleGroup: mg
-			});
-		}
+		await persistExercise({ id: editingId ?? undefined, name: formName, muscleGroup: mg });
 
 		showForm = false;
 		await loadExercises();
@@ -112,7 +106,7 @@
 					Abbrechen
 				</button>
 				<button
-					onclick={saveExercise}
+					onclick={handleSaveExercise}
 					disabled={!formName.trim()}
 					class="flex-1 rounded-xl bg-blue-500 py-2 text-sm font-medium text-white disabled:opacity-50"
 				>
