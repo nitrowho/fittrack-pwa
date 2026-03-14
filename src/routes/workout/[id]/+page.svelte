@@ -2,12 +2,13 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { getWorkoutProgressions } from '$lib/application/workouts/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { timerStore } from '$lib/stores/timer.svelte.js';
-	import { getProgressionRecommendation, applyWeightIncrease, type ProgressionResult } from '$lib/services/progression.js';
 	import { formatDuration, formatVolume, formatVolumeDelta } from '$lib/services/formatter.js';
 	import ExerciseCard from '$lib/components/ExerciseCard.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
 	import type { ExerciseSet } from '$lib/models/types.js';
 
 	let progressions = $state<Map<string, ProgressionResult>>(new Map());
@@ -27,15 +28,7 @@
 	});
 
 	async function loadProgressions() {
-		const map = new Map<string, ProgressionResult>();
-		for (const es of workoutStore.exerciseSessions) {
-			const result = await getProgressionRecommendation(
-				es.exerciseId,
-				es.repRangeUpper
-			);
-			map.set(es.id, result);
-		}
-		progressions = map;
+		progressions = await getWorkoutProgressions(workoutStore.exerciseSessions);
 	}
 
 	async function handleComplete(setId: string, weight: number, reps: number) {
@@ -59,9 +52,7 @@
 	}
 
 	async function handleApplyWeight(exerciseSessionId: string, weight: number) {
-		await applyWeightIncrease(exerciseSessionId, weight);
-		// Refresh sets from store
-		await workoutStore.resumeWorkout(workoutStore.session!.id);
+		await workoutStore.applyWeightIncrease(exerciseSessionId, weight);
 	}
 
 	async function finishWorkout() {

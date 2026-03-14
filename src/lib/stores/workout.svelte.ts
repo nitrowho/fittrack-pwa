@@ -1,17 +1,21 @@
-import { db } from '$lib/db/database.js';
-import { deleteWorkoutSession } from '$lib/db/database.js';
-import type {
-	WorkoutSession,
-	ExerciseSession,
-	ExerciseSet,
-	TemplateExercise
-} from '$lib/models/types.js';
+import {
+	applyWeightIncrease as applyWorkoutWeightIncrease,
+	cancelWorkout as cancelWorkoutSession,
+	completeWorkoutSet,
+	createWorkoutSet,
+	finishWorkout as finishWorkoutSession,
+	removeWorkoutSet,
+	startWorkout as createWorkout,
+	uncompleteWorkoutSet,
+	updateWorkoutSet,
+	updateWorkoutSets
+} from '$lib/application/workouts/commands.js';
+import { loadWorkoutSession } from '$lib/application/workouts/queries.js';
+import type { LastSessionData } from '$lib/application/workouts/types.js';
+import type { ExerciseSession, ExerciseSet, WorkoutSession } from '$lib/models/types.js';
+import { triggerSetCompletionHaptic } from '$lib/infrastructure/haptics.js';
+import { releaseScreenWakeLock, requestScreenWakeLock } from '$lib/infrastructure/wake-lock.js';
 import { timerStore } from './timer.svelte.js';
-
-interface LastSessionData {
-	session: ExerciseSession;
-	sets: ExerciseSet[];
-}
 
 class WorkoutStore {
 	session = $state<WorkoutSession | null>(null);
@@ -55,227 +59,146 @@ class WorkoutStore {
 	}
 
 	async startWorkout(templateId: string): Promise<string> {
-		const template = await db.workoutTemplates.get(templateId);
-		if (!template) throw new Error('Template not found');
-
-		const templateExercises = await db.templateExercises
-			.where('templateId')
-			.equals(templateId)
-			.sortBy('sortOrder');
-
-		const exercises = await db.exercises.toArray();
-		const exerciseMap = new Map(exercises.map((e) => [e.id, e]));
-
-		const sessionId = crypto.randomUUID();
-		const now = new Date();
-
-		const workoutSession: WorkoutSession = {
-			id: sessionId,
-			templateId,
-			templateName: template.name,
-			startedAt: now,
-			completedAt: null,
-			notes: ''
-		};
-
-		const exerciseSessions: ExerciseSession[] = [];
-		const allSets: ExerciseSet[] = [];
-		const lastData = new Map<string, LastSessionData | null>();
-
-		for (const te of templateExercises) {
-			const exercise = exerciseMap.get(te.exerciseId);
-			const esId = crypto.randomUUID();
-
-			const exerciseSession: ExerciseSession = {
-				id: esId,
-				workoutSessionId: sessionId,
-				exerciseId: te.exerciseId,
-				exerciseName: exercise?.name ?? 'Unknown',
-				muscleGroup: exercise?.muscleGroup ?? null,
-				sortOrder: te.sortOrder,
-				startedAt: null,
-				completedAt: null,
-				targetSets: te.targetSets,
-				repRangeLower: te.repRangeLower,
-				repRangeUpper: te.repRangeUpper,
-				restDurationSeconds: te.restDurationSeconds
-			};
-
-			exerciseSessions.push(exerciseSession);
-
-			// Get last session data for this exercise
-			const lastSession = await this.getLastExerciseSession(te.exerciseId);
-			lastData.set(esId, lastSession);
-
-			// Create sets, pre-populated from last session
-			const sets = this.createSetsFromTemplate(te, esId, lastSession);
-			allSets.push(...sets);
-		}
-
-		// Persist to database
-		await db.transaction(
-			'rw',
-			[db.workoutSessions, db.exerciseSessions, db.exerciseSets],
-			async () => {
-				await db.workoutSessions.add(workoutSession);
-				await db.exerciseSessions.bulkAdd(exerciseSessions);
-				await db.exerciseSets.bulkAdd(allSets);
-			}
-		);
-
-		// Update state
-		this.session = workoutSession;
-		this.exerciseSessions = exerciseSessions;
-		this.sets = new Map(exerciseSessions.map((es) => [es.id, allSets.filter((s) => s.exerciseSessionId === es.id)]));
-		this.lastSessionData = lastData;
-
-		// Start session timer and wake lock
-		timerStore.startSession(now);
+		const snapshot = await createWorkout(templateId);
+		this.applySnapshot(snapshot);
+		timerStore.startSession(snapshot.session.startedAt);
 		await this.acquireWakeLock();
-
-		return sessionId;
+		return snapshot.session.id;
 	}
 
 	async resumeWorkout(sessionId: string): Promise<void> {
-		const session = await db.workoutSessions.get(sessionId);
-		if (!session || session.completedAt) return;
-
-		const exerciseSessions = await db.exerciseSessions
-			.where('workoutSessionId')
-			.equals(sessionId)
-			.sortBy('sortOrder');
-
-		const setsMap = new Map<string, ExerciseSet[]>();
-		const lastData = new Map<string, LastSessionData | null>();
-
-		for (const es of exerciseSessions) {
-			const sets = await db.exerciseSets
-				.where('exerciseSessionId')
-				.equals(es.id)
-				.sortBy('setNumber');
-			setsMap.set(es.id, sets);
-
-			const lastSession = await this.getLastExerciseSession(es.exerciseId, sessionId);
-			lastData.set(es.id, lastSession);
+		const snapshot = await loadWorkoutSession(sessionId);
+		if (!snapshot || snapshot.session.completedAt) {
+			return;
 		}
 
-		this.session = session;
-		this.exerciseSessions = exerciseSessions;
-		this.sets = setsMap;
-		this.lastSessionData = lastData;
-
-		timerStore.startSession(session.startedAt);
+		this.applySnapshot(snapshot);
+		timerStore.startSession(snapshot.session.startedAt);
 		await this.acquireWakeLock();
 	}
 
 	async completeSet(setId: string, weight: number, reps: number): Promise<void> {
-		const now = new Date();
-		await db.exerciseSets.update(setId, {
+		const completedAt = await completeWorkoutSet(setId, weight, reps);
+		this.updateSetInState(setId, {
 			weight,
 			reps,
 			isCompleted: true,
-			completedAt: now
+			completedAt
 		});
 
-		this.updateSetInState(setId, { weight, reps, isCompleted: true, completedAt: now });
-
-		// Find the exercise session for this set and start rest timer
 		const exerciseSessionId = this.findExerciseSessionForSet(setId);
 		if (exerciseSessionId) {
-			const es = this.exerciseSessions.find((e) => e.id === exerciseSessionId);
-			if (es) {
-				timerStore.startRestTimer(exerciseSessionId, es.restDurationSeconds);
+			const exerciseSession = this.exerciseSessions.find(
+				(item) => item.id === exerciseSessionId
+			);
+			if (exerciseSession) {
+				timerStore.startRestTimer(exerciseSessionId, exerciseSession.restDurationSeconds);
 			}
 		}
 
-		// Haptic feedback
-		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-			navigator.vibrate(10);
-		}
+		triggerSetCompletionHaptic();
 	}
 
 	async uncompleteSet(setId: string): Promise<void> {
-		await db.exerciseSets.update(setId, {
-			isCompleted: false,
-			completedAt: null
-		});
+		await uncompleteWorkoutSet(setId);
 		this.updateSetInState(setId, { isCompleted: false, completedAt: null });
 	}
 
 	async updateSet(setId: string, changes: Partial<ExerciseSet>): Promise<void> {
-		await db.exerciseSets.update(setId, changes);
+		await updateWorkoutSet(setId, changes);
 		this.updateSetInState(setId, changes);
 
-		// Auto-populate: update other incomplete sets in the same exercise
 		const exerciseSessionId = this.findExerciseSessionForSet(setId);
-		if (exerciseSessionId && (changes.weight !== undefined || changes.reps !== undefined)) {
-			const exerciseSets = this.sets.get(exerciseSessionId) ?? [];
-			const currentSet = exerciseSets.find((s) => s.id === setId);
-			if (currentSet && !currentSet.isCompleted) {
-				for (const other of exerciseSets) {
-					if (other.id !== setId && !other.isCompleted) {
-						const update: Partial<ExerciseSet> = {};
-						if (changes.weight !== undefined) update.weight = changes.weight;
-						if (changes.reps !== undefined) update.reps = changes.reps;
-						await db.exerciseSets.update(other.id, update);
-						this.updateSetInState(other.id, update);
-					}
-				}
-			}
+		if (!exerciseSessionId || (changes.weight === undefined && changes.reps === undefined)) {
+			return;
+		}
+
+		const exerciseSets = this.sets.get(exerciseSessionId) ?? [];
+		const currentSet = exerciseSets.find((set) => set.id === setId);
+		if (!currentSet || currentSet.isCompleted) {
+			return;
+		}
+
+		const propagatedChanges: Partial<ExerciseSet> = {};
+		if (changes.weight !== undefined) propagatedChanges.weight = changes.weight;
+		if (changes.reps !== undefined) propagatedChanges.reps = changes.reps;
+
+		const otherSetIds = exerciseSets
+			.filter((set) => set.id !== setId && !set.isCompleted)
+			.map((set) => set.id);
+
+		await updateWorkoutSets(otherSetIds, propagatedChanges);
+		for (const otherSetId of otherSetIds) {
+			this.updateSetInState(otherSetId, propagatedChanges);
 		}
 	}
 
 	async addSet(exerciseSessionId: string): Promise<void> {
 		const exerciseSets = this.sets.get(exerciseSessionId) ?? [];
 		const lastSet = exerciseSets[exerciseSets.length - 1];
-
-		const newSet: ExerciseSet = {
-			id: crypto.randomUUID(),
+		const newSet = await createWorkoutSet({
 			exerciseSessionId,
 			setNumber: exerciseSets.length + 1,
 			weight: lastSet?.weight ?? 0,
-			reps: lastSet?.reps ?? 0,
-			rir: null,
-			isCompleted: false,
-			completedAt: null
-		};
+			reps: lastSet?.reps ?? 0
+		});
 
-		await db.exerciseSets.add(newSet);
-		const updated = [...exerciseSets, newSet];
-		this.sets.set(exerciseSessionId, updated);
+		this.sets.set(exerciseSessionId, [...exerciseSets, newSet]);
 		this.sets = new Map(this.sets);
 	}
 
 	async removeSet(exerciseSessionId: string): Promise<void> {
 		const exerciseSets = this.sets.get(exerciseSessionId) ?? [];
-		if (exerciseSets.length <= 1) return;
+		if (exerciseSets.length <= 1) {
+			return;
+		}
 
 		const lastSet = exerciseSets[exerciseSets.length - 1];
-		await db.exerciseSets.delete(lastSet.id);
+		await removeWorkoutSet(lastSet.id);
 
-		const updated = exerciseSets.slice(0, -1);
-		this.sets.set(exerciseSessionId, updated);
+		this.sets.set(exerciseSessionId, exerciseSets.slice(0, -1));
 		this.sets = new Map(this.sets);
 	}
 
+	async applyWeightIncrease(exerciseSessionId: string, weight: number): Promise<void> {
+		await applyWorkoutWeightIncrease(exerciseSessionId, weight);
+
+		const exerciseSets = this.sets.get(exerciseSessionId) ?? [];
+		for (const set of exerciseSets) {
+			if (!set.isCompleted) {
+				this.updateSetInState(set.id, { weight });
+			}
+		}
+	}
+
 	async finishWorkout(): Promise<void> {
-		if (!this.session) return;
-
-		const now = new Date();
-		await db.workoutSessions.update(this.session.id, { completedAt: now });
-
-		// Mark all exercise sessions as completed
-		for (const es of this.exerciseSessions) {
-			await db.exerciseSessions.update(es.id, { completedAt: now });
+		if (!this.session) {
+			return;
 		}
 
+		await finishWorkoutSession(this.session.id);
 		this.reset();
 	}
 
 	async cancelWorkout(): Promise<void> {
-		if (!this.session) return;
-		await deleteWorkoutSession(this.session.id);
+		if (!this.session) {
+			return;
+		}
+
+		await cancelWorkoutSession(this.session.id);
 		this.reset();
+	}
+
+	private applySnapshot(snapshot: {
+		session: WorkoutSession;
+		exerciseSessions: ExerciseSession[];
+		sets: Map<string, ExerciseSet[]>;
+		lastSessionData: Map<string, LastSessionData | null>;
+	}) {
+		this.session = snapshot.session;
+		this.exerciseSessions = snapshot.exerciseSessions;
+		this.sets = new Map(snapshot.sets);
+		this.lastSessionData = new Map(snapshot.lastSessionData);
 	}
 
 	private reset() {
@@ -287,83 +210,36 @@ class WorkoutStore {
 		this.releaseWakeLock();
 	}
 
-	private async getLastExerciseSession(
-		exerciseId: string,
-		excludeSessionId?: string
-	): Promise<LastSessionData | null> {
-		const sessions = await db.exerciseSessions
-			.where('exerciseId')
-			.equals(exerciseId)
-			.toArray();
-
-		const completed = sessions
-			.filter((s) => s.completedAt !== null)
-			.filter((s) => !excludeSessionId || s.workoutSessionId !== excludeSessionId)
-			.sort((a, b) => b.completedAt!.getTime() - a.completedAt!.getTime());
-
-		if (completed.length === 0) return null;
-
-		const latest = completed[0];
-		const sets = await db.exerciseSets
-			.where('exerciseSessionId')
-			.equals(latest.id)
-			.sortBy('setNumber');
-
-		return { session: latest, sets };
-	}
-
-	private createSetsFromTemplate(
-		te: TemplateExercise,
-		exerciseSessionId: string,
-		lastSession: LastSessionData | null
-	): ExerciseSet[] {
-		const sets: ExerciseSet[] = [];
-		for (let i = 0; i < te.targetSets; i++) {
-			const lastSet = lastSession?.sets[i];
-			sets.push({
-				id: crypto.randomUUID(),
-				exerciseSessionId,
-				setNumber: i + 1,
-				weight: lastSet?.weight ?? 0,
-				reps: lastSet?.reps ?? 0,
-				rir: null,
-				isCompleted: false,
-				completedAt: null
-			});
-		}
-		return sets;
-	}
-
 	private updateSetInState(setId: string, changes: Partial<ExerciseSet>) {
-		for (const [esId, exerciseSets] of this.sets) {
-			const idx = exerciseSets.findIndex((s) => s.id === setId);
-			if (idx !== -1) {
-				exerciseSets[idx] = { ...exerciseSets[idx], ...changes };
-				this.sets.set(esId, [...exerciseSets]);
-				this.sets = new Map(this.sets);
-				return;
+		for (const [exerciseSessionId, exerciseSets] of this.sets) {
+			const setIndex = exerciseSets.findIndex((set) => set.id === setId);
+			if (setIndex === -1) {
+				continue;
 			}
+
+			exerciseSets[setIndex] = { ...exerciseSets[setIndex], ...changes };
+			this.sets.set(exerciseSessionId, [...exerciseSets]);
+			this.sets = new Map(this.sets);
+			return;
 		}
 	}
 
 	private findExerciseSessionForSet(setId: string): string | null {
-		for (const [esId, exerciseSets] of this.sets) {
-			if (exerciseSets.some((s) => s.id === setId)) return esId;
+		for (const [exerciseSessionId, exerciseSets] of this.sets) {
+			if (exerciseSets.some((set) => set.id === setId)) {
+				return exerciseSessionId;
+			}
 		}
 		return null;
 	}
 
 	private async acquireWakeLock() {
-		if (typeof navigator === 'undefined' || !('wakeLock' in navigator)) return;
-		try {
-			this.wakeLock = await navigator.wakeLock.request('screen');
-		} catch {
-			// Wake lock not available
-		}
+		releaseScreenWakeLock(this.wakeLock);
+		this.wakeLock = await requestScreenWakeLock();
 	}
 
 	private releaseWakeLock() {
-		this.wakeLock?.release();
+		releaseScreenWakeLock(this.wakeLock);
 		this.wakeLock = null;
 	}
 }

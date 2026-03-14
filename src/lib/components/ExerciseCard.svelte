@@ -1,15 +1,11 @@
 <script lang="ts">
+	import type { LastSessionData } from '$lib/application/workouts/types.js';
+	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
 	import type { ExerciseSession, ExerciseSet } from '$lib/models/types.js';
-	import type { ProgressionResult } from '$lib/services/progression.js';
 	import { formatWeight, formatVolume, formatVolumeDelta, formatSetsReps } from '$lib/services/formatter.js';
 	import MuscleGroupBadge from './MuscleGroupBadge.svelte';
 	import SetRow from './SetRow.svelte';
 	import RestTimer from './RestTimer.svelte';
-
-	interface LastSessionData {
-		session: ExerciseSession;
-		sets: ExerciseSet[];
-	}
 
 	interface Props {
 		exerciseSession: ExerciseSession;
