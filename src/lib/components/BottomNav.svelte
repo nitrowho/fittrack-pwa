@@ -5,6 +5,7 @@
 		{ href: '/', label: 'Start', icon: 'home' },
 		{ href: '/history', label: 'Verlauf', icon: 'history' },
 		{ href: '/templates', label: 'Vorlagen', icon: 'templates' },
+		{ href: '/exercises', label: 'Übungen', icon: 'exercises' },
 		{ href: '/settings', label: 'Einstellungen', icon: 'settings' }
 	] as const;
 
@@ -35,6 +36,10 @@
 			{:else if tab.icon === 'templates'}
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 					<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+				</svg>
+			{:else if tab.icon === 'exercises'}
+				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M4 7h2m12 0h2M6 7v10M18 7v10M6 12h12M4 17h2m12 0h2M8 7v10M16 7v10" />
 				</svg>
 			{:else if tab.icon === 'settings'}
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

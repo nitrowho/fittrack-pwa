@@ -14,6 +14,7 @@
 	let formName = $state('');
 	let formMuscleGroup = $state<MuscleGroup | ''>('');
 	let deleteTarget = $state<string | null>(null);
+	let dropdownOpen = $state(false);
 
 	const muscleGroups: MuscleGroup[] = ['ruecken', 'beine', 'brust', 'arme', 'schulter'];
 
@@ -38,6 +39,7 @@
 		editingId = null;
 		formName = '';
 		formMuscleGroup = '';
+		dropdownOpen = false;
 		showForm = true;
 	}
 
@@ -45,8 +47,18 @@
 		editingId = exercise.id;
 		formName = exercise.name;
 		formMuscleGroup = exercise.muscleGroup ?? '';
+		dropdownOpen = false;
 		showForm = true;
 	}
+
+	function selectMuscleGroup(value: MuscleGroup | '') {
+		formMuscleGroup = value;
+		dropdownOpen = false;
+	}
+
+	const selectedLabel = $derived(
+		formMuscleGroup ? MUSCLE_GROUP_LABELS[formMuscleGroup] : 'Keine Muskelgruppe'
+	);
 
 	async function handleSaveExercise() {
 		if (!formName.trim()) return;
@@ -89,15 +101,38 @@
 				placeholder="Name"
 				class="mb-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
 			/>
-			<select
-				bind:value={formMuscleGroup}
-				class="mb-3 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-			>
-				<option value="">Keine Muskelgruppe</option>
-				{#each muscleGroups as mg}
-					<option value={mg}>{MUSCLE_GROUP_LABELS[mg]}</option>
-				{/each}
-			</select>
+			<div class="relative mb-3">
+				<button
+					type="button"
+					onclick={() => (dropdownOpen = !dropdownOpen)}
+					class="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+				>
+					<span class={formMuscleGroup ? '' : 'text-gray-400'}>{selectedLabel}</span>
+					<svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+					</svg>
+				</button>
+				{#if dropdownOpen}
+					<div class="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+						<button
+							type="button"
+							onclick={() => selectMuscleGroup('')}
+							class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 {formMuscleGroup === '' ? 'font-semibold' : ''}"
+						>
+							Keine Muskelgruppe
+						</button>
+						{#each muscleGroups as mg}
+							<button
+								type="button"
+								onclick={() => selectMuscleGroup(mg)}
+								class="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 {formMuscleGroup === mg ? 'font-semibold' : ''}"
+							>
+								{MUSCLE_GROUP_LABELS[mg]}
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
 			<div class="flex gap-2">
 				<button
 					onclick={() => (showForm = false)}
