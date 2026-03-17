@@ -35,7 +35,7 @@
 </script>
 
 <div class="space-y-6 p-4">
-	<h1 class="text-2xl font-bold">FitTrack</h1>
+	<img src="/logo.svg" alt="FitTrack" class="mx-auto h-8 dark:invert" />
 
 	<!-- In-progress workout recovery -->
 	{#if inProgressSession}
