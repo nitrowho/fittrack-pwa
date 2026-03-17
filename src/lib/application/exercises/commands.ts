@@ -1,4 +1,5 @@
 import type { MuscleGroup } from '$lib/models/types.js';
+import { createUuid } from '$lib/domain/shared/uuid.js';
 import {
 	createExercise,
 	deleteExercise as deleteExerciseRecord,
@@ -22,7 +23,7 @@ export async function saveExercise(input: SaveExerciseInput): Promise<string> {
 		return input.id;
 	}
 
-	const id = crypto.randomUUID();
+	const id = createUuid();
 	await createExercise({ id, name, muscleGroup: input.muscleGroup });
 	return id;
 }

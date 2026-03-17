@@ -44,9 +44,9 @@
 				};
 			default:
 				return {
-					title: 'Speicherstatus wird geprueft',
+					title: 'Speicherstatus wird geprüft',
 					description:
-						'Die App prueft, ob der Browser dauerhafte Speicherung fuer lokale Daten erlaubt.',
+						'Die App prüft, ob der Browser dauerhafte Speicherung fuer lokale Daten erlaubt.',
 					classes: 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
 				};
 		}

@@ -1,5 +1,6 @@
 import { getLastExerciseSessionData, getWorkoutStartData } from '$lib/application/workouts/queries.js';
 import type { LastSessionData, WorkoutStateSnapshot } from '$lib/application/workouts/types.js';
+import { createUuid } from '$lib/domain/shared/uuid.js';
 import type { ExerciseSet, WorkoutSession, ExerciseSession, TemplateExercise } from '$lib/models/types.js';
 import {
 	addExerciseSet,
@@ -22,7 +23,7 @@ function createSetsFromTemplate(
 	for (let index = 0; index < templateExercise.targetSets; index++) {
 		const lastSet = lastSession?.sets[index];
 		sets.push({
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			exerciseSessionId,
 			setNumber: index + 1,
 			weight: lastSet?.weight ?? 0,
@@ -60,7 +61,7 @@ export async function startWorkout(templateId: string): Promise<WorkoutStateSnap
 		throw new Error('Vorlage nicht gefunden');
 	}
 
-	const sessionId = crypto.randomUUID();
+	const sessionId = createUuid();
 	const startedAt = new Date();
 	const workoutSession: WorkoutSession = {
 		id: sessionId,
@@ -77,7 +78,7 @@ export async function startWorkout(templateId: string): Promise<WorkoutStateSnap
 	const lastSessionData = new Map<string, LastSessionData | null>();
 
 	for (const templateExercise of templateExercises) {
-		const exerciseSessionId = crypto.randomUUID();
+		const exerciseSessionId = createUuid();
 		const exercise = exerciseNames.get(templateExercise.exerciseId);
 		const priorSession = getLastExerciseSessionData(
 			templateExercise.exerciseId,
@@ -158,7 +159,7 @@ export async function createWorkoutSet(input: {
 	reps: number;
 }): Promise<ExerciseSet> {
 	const exerciseSet: ExerciseSet = {
-		id: crypto.randomUUID(),
+		id: createUuid(),
 		exerciseSessionId: input.exerciseSessionId,
 		setNumber: input.setNumber,
 		weight: input.weight,

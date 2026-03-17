@@ -4,6 +4,7 @@ import {
 	deleteTemplate as deleteTemplateRecord,
 	updateTemplate as updateTemplateRecord
 } from '$lib/repositories/template-repository.js';
+import { createUuid } from '$lib/domain/shared/uuid.js';
 import type { TemplateExerciseInput } from './types.js';
 
 export interface CreateTemplateInput {
@@ -30,7 +31,7 @@ function validateTemplate(input: CreateTemplateInput): string {
 
 export async function createTemplate(input: CreateTemplateInput): Promise<string> {
 	const name = validateTemplate(input);
-	const templateId = crypto.randomUUID();
+	const templateId = createUuid();
 	const sortOrder = await countTemplates();
 
 	await createTemplateRecord(
@@ -41,7 +42,7 @@ export async function createTemplate(input: CreateTemplateInput): Promise<string
 			createdAt: new Date()
 		},
 		input.exercises.map((exercise, index) => ({
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId,
 			sortOrder: index,
 			...exercise
@@ -57,7 +58,7 @@ export async function updateTemplate(input: UpdateTemplateInput): Promise<void> 
 	await updateTemplateRecord(
 		{ id: input.id, name },
 		input.exercises.map((exercise, index) => ({
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: input.id,
 			sortOrder: index,
 			...exercise

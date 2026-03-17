@@ -1,4 +1,5 @@
 import { db } from './database.js';
+import { createUuid } from '$lib/domain/shared/uuid.js';
 import type { Exercise, WorkoutTemplate, TemplateExercise } from '$lib/models/types.js';
 
 export async function seedDatabase(): Promise<void> {
@@ -6,24 +7,24 @@ export async function seedDatabase(): Promise<void> {
 	if (count > 0) return;
 
 	const exercises: Exercise[] = [
-		{ id: crypto.randomUUID(), name: 'Kniebeuge', muscleGroup: 'beine' },
-		{ id: crypto.randomUUID(), name: 'Bankdrücken', muscleGroup: 'brust' },
-		{ id: crypto.randomUUID(), name: 'Chin-Ups', muscleGroup: 'ruecken' },
-		{ id: crypto.randomUUID(), name: 'Langhantelrudern Obergriff', muscleGroup: 'ruecken' },
-		{ id: crypto.randomUUID(), name: 'Rumänisches Kreuzheben', muscleGroup: 'beine' }
+		{ id: createUuid(), name: 'Kniebeuge', muscleGroup: 'beine' },
+		{ id: createUuid(), name: 'Bankdrücken', muscleGroup: 'brust' },
+		{ id: createUuid(), name: 'Chin-Ups', muscleGroup: 'ruecken' },
+		{ id: createUuid(), name: 'Langhantelrudern Obergriff', muscleGroup: 'ruecken' },
+		{ id: createUuid(), name: 'Rumänisches Kreuzheben', muscleGroup: 'beine' }
 	];
 
 	const now = new Date();
 
 	const templates: WorkoutTemplate[] = [
-		{ id: crypto.randomUUID(), name: 'Workout A', sortOrder: 0, createdAt: now },
-		{ id: crypto.randomUUID(), name: 'Workout B', sortOrder: 1, createdAt: now }
+		{ id: createUuid(), name: 'Workout A', sortOrder: 0, createdAt: now },
+		{ id: createUuid(), name: 'Workout B', sortOrder: 1, createdAt: now }
 	];
 
 	const templateExercises: TemplateExercise[] = [
 		// Workout A
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[0].id,
 			exerciseId: exercises[0].id, // Kniebeuge
 			sortOrder: 0,
@@ -33,7 +34,7 @@ export async function seedDatabase(): Promise<void> {
 			restDurationSeconds: 240
 		},
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[0].id,
 			exerciseId: exercises[1].id, // Bankdrücken
 			sortOrder: 1,
@@ -43,7 +44,7 @@ export async function seedDatabase(): Promise<void> {
 			restDurationSeconds: 210
 		},
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[0].id,
 			exerciseId: exercises[2].id, // Chin-Ups
 			sortOrder: 2,
@@ -53,7 +54,7 @@ export async function seedDatabase(): Promise<void> {
 			restDurationSeconds: 195
 		},
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[0].id,
 			exerciseId: exercises[3].id, // Langhantelrudern
 			sortOrder: 3,
@@ -64,7 +65,7 @@ export async function seedDatabase(): Promise<void> {
 		},
 		// Workout B
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[1].id,
 			exerciseId: exercises[4].id, // Rumänisches Kreuzheben
 			sortOrder: 0,
@@ -74,7 +75,7 @@ export async function seedDatabase(): Promise<void> {
 			restDurationSeconds: 240
 		},
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[1].id,
 			exerciseId: exercises[1].id, // Bankdrücken
 			sortOrder: 1,
@@ -84,7 +85,7 @@ export async function seedDatabase(): Promise<void> {
 			restDurationSeconds: 210
 		},
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[1].id,
 			exerciseId: exercises[2].id, // Chin-Ups
 			sortOrder: 2,
@@ -94,7 +95,7 @@ export async function seedDatabase(): Promise<void> {
 			restDurationSeconds: 195
 		},
 		{
-			id: crypto.randomUUID(),
+			id: createUuid(),
 			templateId: templates[1].id,
 			exerciseId: exercises[3].id, // Langhantelrudern
 			sortOrder: 3,
