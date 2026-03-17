@@ -24,22 +24,22 @@
 				return {
 					title: 'Dauerhafte Speicherung aktiv',
 					description:
-						'Dieses Geraet hat bestaetigt, dass lokale App-Daten nicht automatisch durch Speicherbereinigung entfernt werden.',
+						'Dieses Geraet hat bestätigt, dass lokale App-Daten nicht automatisch durch Speicherbereinigung entfernt werden.',
 					classes:
 						'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
 				};
 			case 'best-effort':
 				return {
-					title: 'Dauerhafte Speicherung nicht bestaetigt',
+					title: 'Dauerhafte Speicherung nicht bestätigt',
 					description:
-						'Die Daten bleiben lokal gespeichert, koennen auf dem iPhone aber unter Umstaenden durch den Browser entfernt werden. Ein Backup ist empfohlen.',
+						'Die Daten bleiben lokal gespeichert, können auf dem iPhone aber unter Umstaenden durch den Browser entfernt werden. Ein Backup ist empfohlen.',
 					classes: 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
 				};
 			case 'unsupported':
 				return {
 					title: 'Dauerhafte Speicherung nicht verfuegbar',
 					description:
-						'Dieser Browser unterstuetzt keine bestaetigte Dauer-Speicherung. Die Daten liegen weiterhin lokal im Browser.',
+						'Dieser Browser unterstuetzt keine bestätigte Dauer-Speicherung. Die Daten liegen weiterhin lokal im Browser.',
 					classes: 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
 				};
 			default:
