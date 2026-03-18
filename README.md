@@ -139,14 +139,14 @@ The iPhone installation flow works through Safari and requires the app to be ser
 
 ## Documentation
 
-Additional project documentation is available in [`docs/`](/Users/wolfgang/Development/FitTrack/fittrack-pwa/docs):
+Additional project documentation is available in [`docs/`](docs/):
 
-- [`docs/overview.md`](/Users/wolfgang/Development/FitTrack/fittrack-pwa/docs/overview.md)
-- [`docs/architecture.md`](/Users/wolfgang/Development/FitTrack/fittrack-pwa/docs/architecture.md)
-- [`docs/features.md`](/Users/wolfgang/Development/FitTrack/fittrack-pwa/docs/features.md)
-- [`docs/data-model.md`](/Users/wolfgang/Development/FitTrack/fittrack-pwa/docs/data-model.md)
-- [`docs/pwa-config.md`](/Users/wolfgang/Development/FitTrack/fittrack-pwa/docs/pwa-config.md)
-- [`docs/development-rules.md`](/Users/wolfgang/Development/FitTrack/fittrack-pwa/docs/development-rules.md)
+- [`docs/overview.md`](docs/overview.md)
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/features.md`](docs/features.md)
+- [`docs/data-model.md`](docs/data-model.md)
+- [`docs/pwa-config.md`](docs/pwa-config.md)
+- [`docs/development-rules.md`](docs/development-rules.md)
 
 ## License
 
