@@ -137,17 +137,6 @@ The iPhone installation flow works through Safari and requires the app to be ser
 - Service worker support enables offline usage after the first successful load.
 - PWA installation and service workers require HTTPS outside local development.
 
-## Documentation
-
-Additional project documentation is available in [`docs/`](docs/):
-
-- [`docs/overview.md`](docs/overview.md)
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/features.md`](docs/features.md)
-- [`docs/data-model.md`](docs/data-model.md)
-- [`docs/pwa-config.md`](docs/pwa-config.md)
-- [`docs/development-rules.md`](docs/development-rules.md)
-
 ## License
 
 Private project.
