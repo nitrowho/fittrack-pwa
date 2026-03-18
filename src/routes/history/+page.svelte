@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { base } from '$app/paths';
 	import { deleteHistorySession } from '$lib/application/history/commands.js';
 	import { listHistorySessions, type HistorySessionListItem } from '$lib/application/history/queries.js';
 	import { formatShortDate, formatDuration, formatVolume } from '$lib/services/formatter.js';
@@ -32,7 +33,7 @@
 			{#each sessions as item}
 				<div class="flex items-center gap-2">
 					<a
-						href="/history/{item.session.id}"
+						href="{base}/history/{item.session.id}"
 						class="flex-1 rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900"
 					>
 						<div class="flex items-center justify-between">

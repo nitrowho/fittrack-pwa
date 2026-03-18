@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { getDashboardData, type DashboardTemplate } from '$lib/application/dashboard/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { formatShortDate, formatDuration } from '$lib/services/formatter.js';
@@ -21,7 +22,7 @@
 
 	async function startWorkout(templateId: string) {
 		const sessionId = await workoutStore.startWorkout(templateId);
-		goto(`/workout/${sessionId}`);
+		goto(`${base}/workout/${sessionId}`);
 	}
 
 	function getSuggestedTemplateId(): string | null {
@@ -35,12 +36,12 @@
 </script>
 
 <div class="space-y-6 p-4">
-	<img src="/logo.svg" alt="FitTrack" class="mx-auto h-8 dark:invert" />
+	<img src="{base}/logo.svg" alt="FitTrack" class="mx-auto h-8 dark:invert" />
 
 	<!-- In-progress workout recovery -->
 	{#if inProgressSession}
 		<a
-			href="/workout/{inProgressSession.id}"
+			href="{base}/workout/{inProgressSession.id}"
 			class="block rounded-2xl bg-blue-500 p-4 text-white"
 		>
 			<p class="text-sm font-medium opacity-80">Laufendes Workout</p>
@@ -86,7 +87,7 @@
 			<div class="space-y-2">
 				{#each recentSessions as session}
 					<a
-						href="/history/{session.id}"
+						href="{base}/history/{session.id}"
 						class="block rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900"
 					>
 						<div class="flex items-center justify-between">

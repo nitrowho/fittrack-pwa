@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import {
 		getHistorySessionDetail,
 		type HistoryExerciseSessionDetail
@@ -29,7 +30,7 @@
 {#if session}
 	<div class="space-y-4 p-4">
 		<div>
-			<a href="/history" class="text-sm text-blue-500">&larr; Verlauf</a>
+			<a href="{base}/history" class="text-sm text-blue-500">&larr; Verlauf</a>
 			<h1 class="mt-1 text-2xl font-bold">{session.templateName}</h1>
 			<p class="text-sm text-gray-500">{formatDate(session.startedAt)}</p>
 		</div>

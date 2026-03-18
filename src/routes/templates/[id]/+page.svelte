@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import { deleteTemplate } from '$lib/application/templates/commands.js';
 	import { getTemplateDetail } from '$lib/application/templates/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
@@ -24,20 +25,20 @@
 	async function handleDelete() {
 		if (!template) return;
 		await deleteTemplate(template.id);
-		goto('/templates');
+		goto(`${base}/templates`);
 	}
 
 	async function startWorkout() {
 		if (!template) return;
 		const sessionId = await workoutStore.startWorkout(template.id);
-		goto(`/workout/${sessionId}`);
+		goto(`${base}/workout/${sessionId}`);
 	}
 </script>
 
 {#if template}
 	<div class="space-y-4 p-4">
 		<div>
-			<a href="/templates" class="text-sm text-blue-500">&larr; Vorlagen</a>
+			<a href="{base}/templates" class="text-sm text-blue-500">&larr; Vorlagen</a>
 			<h1 class="mt-1 text-2xl font-bold">{template.name}</h1>
 		</div>
 
@@ -58,7 +59,7 @@
 
 		<div class="flex gap-3 pt-2">
 			<a
-				href="/templates/{template.id}/edit"
+				href="{base}/templates/{template.id}/edit"
 				class="flex-1 rounded-2xl bg-gray-100 py-3 text-center text-sm font-semibold dark:bg-gray-800"
 			>
 				Bearbeiten

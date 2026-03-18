@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 
 	const tabs = [
 		{ href: '/', label: 'Start', icon: 'home' },
@@ -10,8 +11,9 @@
 	] as const;
 
 	function isActive(href: string): boolean {
-		if (href === '/') return page.url.pathname === '/';
-		return page.url.pathname.startsWith(href);
+		const fullPath = `${base}${href}`;
+		if (href === '/') return page.url.pathname === fullPath || page.url.pathname === `${base}`;
+		return page.url.pathname.startsWith(fullPath);
 	}
 </script>
 
@@ -20,7 +22,7 @@
 >
 	{#each tabs as tab}
 		<a
-			href={tab.href}
+			href="{base}{tab.href}"
 			class="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors {isActive(tab.href)
 				? 'text-blue-500'
 				: 'text-gray-500 dark:text-gray-400'}"

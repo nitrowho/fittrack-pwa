@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { createTemplate } from '$lib/application/templates/commands.js';
 	import { listTemplateFormExercises } from '$lib/application/templates/queries.js';
@@ -77,13 +78,13 @@
 		if (!name.trim() || selectedExercises.length === 0) return;
 
 		await createTemplate({ name, exercises: selectedExercises });
-		goto('/templates');
+		goto(`${base}/templates`);
 	}
 </script>
 
 <div class="space-y-4 p-4">
 	<div>
-		<a href="/templates" class="text-sm text-blue-500">&larr; Vorlagen</a>
+		<a href="{base}/templates" class="text-sm text-blue-500">&larr; Vorlagen</a>
 		<h1 class="mt-1 text-2xl font-bold">Neue Vorlage</h1>
 	</div>
 

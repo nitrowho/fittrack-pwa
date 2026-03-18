@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import { updateTemplate } from '$lib/application/templates/commands.js';
 	import { getTemplateEditorData } from '$lib/application/templates/queries.js';
 	import type { TemplateExerciseInput } from '$lib/application/templates/types.js';
@@ -76,14 +77,14 @@
 
 		await updateTemplate({ id: template.id, name, exercises: selectedExercises });
 
-		goto(`/templates/${template.id}`);
+		goto(`${base}/templates/${template.id}`);
 	}
 </script>
 
 {#if template}
 	<div class="space-y-4 p-4">
 		<div>
-			<a href="/templates/{template.id}" class="text-sm text-blue-500">&larr; Zurück</a>
+			<a href="{base}/templates/{template.id}" class="text-sm text-blue-500">&larr; Zurück</a>
 			<h1 class="mt-1 text-2xl font-bold">Vorlage bearbeiten</h1>
 		</div>
 

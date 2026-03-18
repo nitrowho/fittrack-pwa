@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { base } from '$app/paths';
 	import { getWorkoutProgressions } from '$lib/application/workouts/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { timerStore } from '$lib/stores/timer.svelte.js';
@@ -21,7 +22,7 @@
 			await workoutStore.resumeWorkout(id);
 		}
 		if (!workoutStore.isActive) {
-			goto('/');
+			goto(`${base}/`);
 			return;
 		}
 		await loadProgressions();
@@ -57,12 +58,12 @@
 
 	async function finishWorkout() {
 		await workoutStore.finishWorkout();
-		goto('/');
+		goto(`${base}/`);
 	}
 
 	async function cancelWorkout() {
 		await workoutStore.cancelWorkout();
-		goto('/');
+		goto(`${base}/`);
 	}
 
 	let totalSets = $derived(
