@@ -4,6 +4,9 @@ import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	preview: {
+		allowedHosts: ['.trycloudflare.com']
+	},
 	plugins: [
 		sveltekit(),
 		tailwindcss(),
