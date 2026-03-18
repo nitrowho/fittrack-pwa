@@ -12,6 +12,10 @@ export default defineConfig({
 		tailwindcss(),
 		SvelteKitPWA({
 			registerType: 'prompt',
+			kit: {
+				adapterFallback: 'index.html',
+				spa: true
+			},
 			manifest: {
 				name: 'FitTrack',
 				short_name: 'FitTrack',
@@ -28,7 +32,9 @@ export default defineConfig({
 				]
 			},
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}']
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+				clientsClaim: true,
+				skipWaiting: true
 			}
 		})
 	]

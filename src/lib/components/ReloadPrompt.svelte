@@ -2,7 +2,19 @@
 	import { onMount } from 'svelte';
 
 	let needRefresh = $state(false);
+	let offlineReady = $state(false);
 	let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = $state(null);
+
+	const OFFLINE_READY_KEY = 'fittrack-offline-ready-shown';
+
+	function showOfflineReady() {
+		if (localStorage.getItem(OFFLINE_READY_KEY)) return;
+		localStorage.setItem(OFFLINE_READY_KEY, '1');
+		offlineReady = true;
+		setTimeout(() => {
+			offlineReady = false;
+		}, 4000);
+	}
 
 	onMount(async () => {
 		try {
@@ -10,6 +22,9 @@
 			updateSW = registerSW({
 				onNeedRefresh() {
 					needRefresh = true;
+				},
+				onOfflineReady() {
+					showOfflineReady();
 				}
 			});
 		} catch {
@@ -26,8 +41,14 @@
 	}
 </script>
 
+{#if offlineReady}
+	<div class="fixed bottom-24 left-4 right-4 z-50 rounded-2xl bg-green-600 p-4 shadow-lg">
+		<p class="text-sm font-medium text-white">Bereit für Offline-Nutzung</p>
+	</div>
+{/if}
+
 {#if needRefresh}
-	<div class="fixed left-4 right-4 top-4 z-50 rounded-2xl bg-white p-4 shadow-lg dark:bg-gray-900">
+	<div class="fixed bottom-24 left-4 right-4 z-50 rounded-2xl bg-white p-4 shadow-lg dark:bg-gray-900">
 		<p class="mb-3 text-sm font-medium">Neue Version verfügbar</p>
 		<div class="flex gap-2">
 			<button
