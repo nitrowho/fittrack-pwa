@@ -150,7 +150,7 @@
 		<div class="flex gap-3 pt-2">
 			<button
 				onclick={() => (showCancelDialog = true)}
-				class="flex-1 rounded-2xl bg-gray-100 py-3 text-sm font-semibold dark:bg-gray-800"
+				class="flex-1 rounded-2xl bg-red-500 py-3 text-sm font-semibold text-white"
 			>
 				Abbrechen
 			</button>
