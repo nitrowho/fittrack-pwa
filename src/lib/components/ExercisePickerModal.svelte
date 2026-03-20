@@ -89,7 +89,7 @@
 		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
 		onclick={handleBackdropClick}
 	>
-		<div class="flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-2xl bg-white dark:bg-gray-900">
+		<div class="flex w-full max-w-lg flex-col rounded-t-2xl bg-white dark:bg-gray-900" style="max-height: calc(85vh - env(safe-area-inset-bottom, 0px));">
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
 				<h3 class="text-lg font-semibold">Übung hinzufügen</h3>
@@ -116,7 +116,7 @@
 			</div>
 
 			<!-- Exercise list -->
-			<div class="flex-1 overflow-y-auto p-4">
+			<div class="flex-1 overflow-y-auto p-4 pb-24">
 				{#if filteredExercises.length === 0}
 					<p class="py-8 text-center text-sm text-gray-500">Keine Übungen gefunden</p>
 				{:else}
