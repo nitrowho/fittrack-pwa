@@ -51,6 +51,23 @@ export async function createWorkoutSessionGraph(
 	);
 }
 
+export async function addExerciseSessionGraph(
+	exerciseSession: ExerciseSession,
+	exerciseSets: ExerciseSet[]
+): Promise<void> {
+	await db.transaction('rw', [db.exerciseSessions, db.exerciseSets], async () => {
+		await db.exerciseSessions.add(exerciseSession);
+		await db.exerciseSets.bulkAdd(exerciseSets);
+	});
+}
+
+export async function deleteExerciseSession(exerciseSessionId: string): Promise<void> {
+	await db.transaction('rw', [db.exerciseSessions, db.exerciseSets], async () => {
+		await db.exerciseSets.where('exerciseSessionId').equals(exerciseSessionId).delete();
+		await db.exerciseSessions.delete(exerciseSessionId);
+	});
+}
+
 export async function updateExerciseSet(
 	id: string,
 	changes: Partial<ExerciseSet>

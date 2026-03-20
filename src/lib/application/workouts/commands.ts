@@ -1,10 +1,12 @@
-import { getLastExerciseSessionData, getWorkoutStartData } from '$lib/application/workouts/queries.js';
+import { getAddExerciseData, getLastExerciseSessionData, getWorkoutStartData } from '$lib/application/workouts/queries.js';
 import type { LastSessionData, WorkoutStateSnapshot } from '$lib/application/workouts/types.js';
 import { createUuid } from '$lib/domain/shared/uuid.js';
-import type { ExerciseSet, WorkoutSession, ExerciseSession, TemplateExercise } from '$lib/models/types.js';
+import type { Exercise, ExerciseSet, WorkoutSession, ExerciseSession, TemplateExercise } from '$lib/models/types.js';
 import {
+	addExerciseSessionGraph,
 	addExerciseSet,
 	createWorkoutSessionGraph,
+	deleteExerciseSession,
 	deleteExerciseSet,
 	deleteWorkoutSession,
 	finishWorkoutSession,
@@ -114,6 +116,80 @@ export async function startWorkout(templateId: string): Promise<WorkoutStateSnap
 		sets: buildSetsMap(exerciseSets),
 		lastSessionData
 	};
+}
+
+export async function startCustomWorkout(): Promise<WorkoutStateSnapshot> {
+	const sessionId = createUuid();
+	const startedAt = new Date();
+	const workoutSession: WorkoutSession = {
+		id: sessionId,
+		templateId: null,
+		templateName: 'Freies Workout',
+		startedAt,
+		completedAt: null,
+		notes: ''
+	};
+
+	await createWorkoutSessionGraph(workoutSession, [], []);
+
+	return {
+		session: workoutSession,
+		exerciseSessions: [],
+		sets: new Map(),
+		lastSessionData: new Map()
+	};
+}
+
+const DEFAULT_TARGET_SETS = 3;
+const DEFAULT_REP_RANGE_LOWER = 8;
+const DEFAULT_REP_RANGE_UPPER = 12;
+const DEFAULT_REST_DURATION_SECONDS = 90;
+
+export async function addExerciseToWorkout(
+	workoutSessionId: string,
+	exercise: Exercise,
+	sortOrder: number
+): Promise<{ exerciseSession: ExerciseSession; sets: ExerciseSet[]; lastSession: LastSessionData | null }> {
+	const { lastSession } = await getAddExerciseData(exercise.id, workoutSessionId);
+
+	const exerciseSessionId = createUuid();
+	const exerciseSession: ExerciseSession = {
+		id: exerciseSessionId,
+		workoutSessionId,
+		exerciseId: exercise.id,
+		exerciseName: exercise.name,
+		muscleGroup: exercise.muscleGroup,
+		sortOrder,
+		startedAt: null,
+		completedAt: null,
+		targetSets: DEFAULT_TARGET_SETS,
+		repRangeLower: DEFAULT_REP_RANGE_LOWER,
+		repRangeUpper: DEFAULT_REP_RANGE_UPPER,
+		restDurationSeconds: DEFAULT_REST_DURATION_SECONDS
+	};
+
+	const sets: ExerciseSet[] = [];
+	for (let index = 0; index < DEFAULT_TARGET_SETS; index++) {
+		const lastSet = lastSession?.sets[index];
+		sets.push({
+			id: createUuid(),
+			exerciseSessionId,
+			setNumber: index + 1,
+			weight: lastSet?.weight ?? 0,
+			reps: lastSet?.reps ?? 0,
+			rir: null,
+			isCompleted: false,
+			completedAt: null
+		});
+	}
+
+	await addExerciseSessionGraph(exerciseSession, sets);
+
+	return { exerciseSession, sets, lastSession };
+}
+
+export async function removeExerciseFromWorkout(exerciseSessionId: string): Promise<void> {
+	await deleteExerciseSession(exerciseSessionId);
 }
 
 export async function completeWorkoutSet(

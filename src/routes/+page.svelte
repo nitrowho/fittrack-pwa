@@ -25,6 +25,11 @@
 		goto(`${base}/workout/${sessionId}`);
 	}
 
+	async function startCustomWorkout() {
+		const sessionId = await workoutStore.startCustomWorkout();
+		goto(`${base}/workout/${sessionId}`);
+	}
+
 	function getSuggestedTemplateId(): string | null {
 		if (templates.length === 0) return null;
 		if (!lastCompletedTemplateId) return templates[0].id;
@@ -75,6 +80,16 @@
 					</p>
 				</button>
 			{/each}
+			<button
+				onclick={startCustomWorkout}
+				disabled={inProgressSession !== null}
+				class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 p-4 text-sm font-semibold text-gray-500 disabled:opacity-50 dark:border-gray-600 dark:text-gray-400"
+			>
+				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+				</svg>
+				Freies Workout
+			</button>
 		</div>
 	</section>
 

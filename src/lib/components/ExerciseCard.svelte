@@ -3,6 +3,7 @@
 	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
 	import type { ExerciseSession, ExerciseSet } from '$lib/models/types.js';
 	import { formatWeight, formatVolume, formatVolumeDelta, formatSetsReps } from '$lib/services/formatter.js';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import MuscleGroupBadge from './MuscleGroupBadge.svelte';
 	import SetRow from './SetRow.svelte';
 	import RestTimer from './RestTimer.svelte';
@@ -18,6 +19,7 @@
 		onaddset: (exerciseSessionId: string) => void;
 		onremoveset: (exerciseSessionId: string) => void;
 		onapplyweight: (exerciseSessionId: string, weight: number) => void;
+		onremoveexercise?: (exerciseSessionId: string) => void;
 	}
 
 	let {
@@ -30,8 +32,11 @@
 		onupdate,
 		onaddset,
 		onremoveset,
-		onapplyweight
+		onapplyweight,
+		onremoveexercise
 	}: Props = $props();
+
+	let showRemoveConfirm = $state(false);
 
 	let expanded = $state(true);
 
@@ -143,6 +148,26 @@
 					</button>
 				{/if}
 			</div>
+
+			{#if onremoveexercise}
+				<button
+					onclick={() => (showRemoveConfirm = true)}
+					class="w-full rounded-lg py-1.5 text-xs font-medium text-red-500"
+				>
+					Übung entfernen
+				</button>
+			{/if}
 		</div>
+	{/if}
+
+	{#if onremoveexercise}
+		<ConfirmDialog
+			open={showRemoveConfirm}
+			title="Übung entfernen?"
+			message="{exerciseSession.exerciseName} und alle zugehörigen Sätze werden entfernt."
+			confirmText="Entfernen"
+			onconfirm={() => { showRemoveConfirm = false; onremoveexercise!(exerciseSession.id); }}
+			oncancel={() => (showRemoveConfirm = false)}
+		/>
 	{/if}
 </div>
