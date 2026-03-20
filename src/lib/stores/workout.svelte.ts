@@ -131,6 +131,8 @@ class WorkoutStore {
 				if (exerciseSession) {
 					timerStore.startRestTimer(exerciseSessionId, exerciseSession.restDurationSeconds);
 				}
+			} else {
+				timerStore.skipTimer(exerciseSessionId);
 			}
 		}
 
