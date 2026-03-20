@@ -135,6 +135,26 @@ export async function loadWorkoutSession(
 	return createWorkoutSnapshot(session, exerciseSessions, allExerciseSessions, allExerciseSets);
 }
 
+export async function getAddExerciseData(
+	exerciseId: string,
+	workoutSessionId: string
+): Promise<{ lastSession: LastSessionData | null }> {
+	const [allExerciseSessions, allExerciseSets] = await Promise.all([
+		listAllExerciseSessions(),
+		listAllExerciseSets()
+	]);
+
+	const setsByExerciseSessionId = buildSetsMap(allExerciseSets);
+	const lastSession = getLastExerciseSessionData(
+		exerciseId,
+		allExerciseSessions,
+		setsByExerciseSessionId,
+		workoutSessionId
+	);
+
+	return { lastSession };
+}
+
 export async function getWorkoutProgressions(
 	exerciseSessions: ExerciseSession[]
 ): Promise<Map<string, ProgressionResult>> {

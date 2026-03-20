@@ -42,7 +42,7 @@ export interface TemplateExercise {
 
 export interface WorkoutSession {
 	id: string;
-	templateId: string;
+	templateId: string | null;
 	templateName: string;
 	startedAt: Date;
 	completedAt: Date | null;

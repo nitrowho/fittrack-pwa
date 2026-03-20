@@ -1,10 +1,13 @@
 import {
+	addExerciseToWorkout,
 	applyWeightIncrease as applyWorkoutWeightIncrease,
 	cancelWorkout as cancelWorkoutSession,
 	completeWorkoutSet,
 	createWorkoutSet,
 	finishWorkout as finishWorkoutSession,
+	removeExerciseFromWorkout,
 	removeWorkoutSet,
+	startCustomWorkout as createCustomWorkout,
 	startWorkout as createWorkout,
 	uncompleteWorkoutSet,
 	updateWorkoutSet,
@@ -12,7 +15,7 @@ import {
 } from '$lib/application/workouts/commands.js';
 import { loadWorkoutSession } from '$lib/application/workouts/queries.js';
 import type { LastSessionData } from '$lib/application/workouts/types.js';
-import type { ExerciseSession, ExerciseSet, WorkoutSession } from '$lib/models/types.js';
+import type { Exercise, ExerciseSession, ExerciseSet, WorkoutSession } from '$lib/models/types.js';
 import { triggerSetCompletionHaptic } from '$lib/infrastructure/haptics.js';
 import { releaseScreenWakeLock, requestScreenWakeLock } from '$lib/infrastructure/wake-lock.js';
 import { timerStore } from './timer.svelte.js';
@@ -66,6 +69,37 @@ class WorkoutStore {
 		return snapshot.session.id;
 	}
 
+	async startCustomWorkout(): Promise<string> {
+		const snapshot = await createCustomWorkout();
+		this.applySnapshot(snapshot);
+		timerStore.startSession(snapshot.session.startedAt);
+		await this.acquireWakeLock();
+		return snapshot.session.id;
+	}
+
+	async addExercise(exercise: Exercise): Promise<void> {
+		if (!this.session) return;
+
+		const sortOrder = this.exerciseSessions.length;
+		const result = await addExerciseToWorkout(this.session.id, exercise, sortOrder);
+
+		this.exerciseSessions = [...this.exerciseSessions, result.exerciseSession];
+		this.sets.set(result.exerciseSession.id, result.sets);
+		this.sets = new Map(this.sets);
+		this.lastSessionData.set(result.exerciseSession.id, result.lastSession);
+		this.lastSessionData = new Map(this.lastSessionData);
+	}
+
+	async removeExercise(exerciseSessionId: string): Promise<void> {
+		await removeExerciseFromWorkout(exerciseSessionId);
+
+		this.exerciseSessions = this.exerciseSessions.filter((es) => es.id !== exerciseSessionId);
+		this.sets.delete(exerciseSessionId);
+		this.sets = new Map(this.sets);
+		this.lastSessionData.delete(exerciseSessionId);
+		this.lastSessionData = new Map(this.lastSessionData);
+	}
+
 	async resumeWorkout(sessionId: string): Promise<void> {
 		const snapshot = await loadWorkoutSession(sessionId);
 		if (!snapshot || snapshot.session.completedAt) {
@@ -97,6 +131,8 @@ class WorkoutStore {
 				if (exerciseSession) {
 					timerStore.startRestTimer(exerciseSessionId, exerciseSession.restDurationSeconds);
 				}
+			} else {
+				timerStore.skipTimer(exerciseSessionId);
 			}
 		}
 

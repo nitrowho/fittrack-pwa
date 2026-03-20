@@ -32,7 +32,7 @@
 				return {
 					title: 'Dauerhafte Speicherung nicht bestätigt',
 					description:
-						'Die Daten bleiben lokal gespeichert, können auf dem iPhone aber unter Umstaenden durch den Browser entfernt werden. Ein Backup ist empfohlen.',
+						'Die Daten bleiben lokal gespeichert, können auf dem iPhone aber unter Umständen durch den Browser entfernt werden. Ein Backup ist empfohlen.',
 					classes: 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
 				};
 			case 'unsupported':

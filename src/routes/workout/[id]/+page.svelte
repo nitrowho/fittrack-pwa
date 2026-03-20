@@ -8,13 +8,15 @@
 	import { timerStore } from '$lib/stores/timer.svelte.js';
 	import { formatDuration, formatVolume, formatVolumeDelta } from '$lib/services/formatter.js';
 	import ExerciseCard from '$lib/components/ExerciseCard.svelte';
+	import ExercisePickerModal from '$lib/components/ExercisePickerModal.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
-	import type { ExerciseSet } from '$lib/models/types.js';
+	import type { Exercise, ExerciseSet } from '$lib/models/types.js';
 
 	let progressions = $state<Map<string, ProgressionResult>>(new Map());
 	let showFinishDialog = $state(false);
 	let showCancelDialog = $state(false);
+	let showExercisePicker = $state(false);
 
 	onMount(async () => {
 		const id = page.params.id as string;
@@ -55,6 +57,20 @@
 	async function handleApplyWeight(exerciseSessionId: string, weight: number) {
 		await workoutStore.applyWeightIncrease(exerciseSessionId, weight);
 	}
+
+	async function handleAddExercise(exercise: Exercise) {
+		await workoutStore.addExercise(exercise);
+		showExercisePicker = false;
+		await loadProgressions();
+	}
+
+	async function handleRemoveExercise(exerciseSessionId: string) {
+		await workoutStore.removeExercise(exerciseSessionId);
+	}
+
+	let usedExerciseIds = $derived(
+		workoutStore.exerciseSessions.map((es) => es.exerciseId)
+	);
 
 	async function finishWorkout() {
 		await workoutStore.finishWorkout();
@@ -115,14 +131,26 @@
 				onaddset={handleAddSet}
 				onremoveset={handleRemoveSet}
 				onapplyweight={handleApplyWeight}
+				onremoveexercise={handleRemoveExercise}
 			/>
 		{/each}
+
+		<!-- Add exercise button -->
+		<button
+			onclick={() => (showExercisePicker = true)}
+			class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 py-3 text-sm font-semibold text-gray-500 dark:border-gray-600 dark:text-gray-400"
+		>
+			<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+			</svg>
+			Übung hinzufügen
+		</button>
 
 		<!-- Action buttons -->
 		<div class="flex gap-3 pt-2">
 			<button
 				onclick={() => (showCancelDialog = true)}
-				class="flex-1 rounded-2xl bg-gray-100 py-3 text-sm font-semibold dark:bg-gray-800"
+				class="flex-1 rounded-2xl bg-red-500 py-3 text-sm font-semibold text-white"
 			>
 				Abbrechen
 			</button>
@@ -152,5 +180,12 @@
 		cancelText="Zurück"
 		onconfirm={cancelWorkout}
 		oncancel={() => (showCancelDialog = false)}
+	/>
+
+	<ExercisePickerModal
+		open={showExercisePicker}
+		excludeExerciseIds={usedExerciseIds}
+		onselect={handleAddExercise}
+		onclose={() => (showExercisePicker = false)}
 	/>
 {/if}
