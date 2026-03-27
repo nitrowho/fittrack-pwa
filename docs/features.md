@@ -86,10 +86,29 @@ Comparison is always **per-exercise**, not per-template. When doing Workout A co
 - **Download**: Generate `Blob`, create download link via `URL.createObjectURL`
 - **Only completed sessions and sets** are exported
 
+## Hantelscheiben-Rechner (Plate Calculator)
+
+- Exercises have an optional `isBarbell` flag (default false) — set in exercise create/edit form
+- Seed exercises flagged as barbell: Kniebeuge, Bankdrücken, Langhantelrudern Obergriff, Rumänisches Kreuzheben
+- During a workout, barbell exercises show a barbell icon next to the weight input in each set row
+- Tapping the icon opens a bottom sheet showing the plate breakdown per side
+- **Settings** (in Settings page → "Hantelscheiben" section):
+  - Configurable bar weight (default 20 kg)
+  - Configurable plate denominations with optional quantity limits
+  - Default plates: 20, 15, 10, 5, 2.5, 1.25 kg (all unlimited)
+  - Users can add custom denominations (e.g. 0.5 kg)
+- **Calculator logic**: Greedy algorithm — subtract bar weight, divide by 2 for per-side, assign largest plates first
+- **Edge cases**:
+  - Weight = bar weight → "Keine Scheiben nötig"
+  - Weight < bar weight → warning with bar weight shown
+  - Impossible weight → warning with nearest achievable weights (lower and upper)
+  - Weight = 0 → barbell icon hidden
+- Plate config stored in `settings` IndexedDB table as a JSON document
+
 ## Backup & Restore
 
 - **Backup**: Export entire database as a single JSON file
-  - All 6 tables dumped with full data
+  - All 7 tables dumped with full data (including settings)
   - Includes `backupVersion` and `exportedAt` timestamp
   - Downloaded as `fittrack-backup-YYYY-MM-DD.json`
 - **Restore**: Import a backup JSON file

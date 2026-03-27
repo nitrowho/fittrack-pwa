@@ -13,6 +13,7 @@
 		sets: ExerciseSet[];
 		lastSession: LastSessionData | null;
 		progression: ProgressionResult;
+		isBarbell?: boolean;
 		oncomplete: (setId: string, weight: number, reps: number) => void;
 		onuncomplete: (setId: string) => void;
 		onupdate: (setId: string, changes: Partial<ExerciseSet>) => void;
@@ -20,6 +21,7 @@
 		onremoveset: (exerciseSessionId: string) => void;
 		onapplyweight: (exerciseSessionId: string, weight: number) => void;
 		onremoveexercise?: (exerciseSessionId: string) => void;
+		onopenplatecalc?: (weight: number) => void;
 	}
 
 	let {
@@ -27,13 +29,15 @@
 		sets,
 		lastSession,
 		progression,
+		isBarbell = false,
 		oncomplete,
 		onuncomplete,
 		onupdate,
 		onaddset,
 		onremoveset,
 		onapplyweight,
-		onremoveexercise
+		onremoveexercise,
+		onopenplatecalc
 	}: Props = $props();
 
 	let showRemoveConfirm = $state(false);
@@ -124,9 +128,11 @@
 					<SetRow
 						{set}
 						lastSet={lastSession?.sets[i] ?? null}
+						{isBarbell}
 						{oncomplete}
 						{onuncomplete}
 						{onupdate}
+						{onopenplatecalc}
 					/>
 				{/each}
 			</div>

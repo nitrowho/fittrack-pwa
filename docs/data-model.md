@@ -25,6 +25,23 @@ interface Exercise {
   id: string;           // UUID
   name: string;
   muscleGroup: MuscleGroup | null;
+  isBarbell: boolean;   // true for barbell exercises (enables plate calculator)
+}
+
+interface PlateDefinition {
+  weight: number;       // e.g. 20, 15, 10, 5, 2.5, 1.25
+  quantity?: number;    // total plates available (both sides); undefined = unlimited
+}
+
+interface PlateConfig {
+  barWeight: number;          // default 20
+  plates: PlateDefinition[];  // sorted descending by weight
+}
+
+// Settings table stores key-value pairs (e.g. key='plateConfig', value=PlateConfig)
+interface SettingsRecord {
+  key: string;
+  value: unknown;
 }
 
 interface WorkoutTemplate {
@@ -93,6 +110,7 @@ class FitTrackDB extends Dexie {
   workoutSessions!: Table<WorkoutSession>;
   exerciseSessions!: Table<ExerciseSession>;
   exerciseSets!: Table<ExerciseSet>;
+  settings!: Table<SettingsRecord>;
 
   constructor() {
     super('fittrack');
@@ -103,6 +121,11 @@ class FitTrackDB extends Dexie {
       workoutSessions: 'id, templateId, startedAt, completedAt',
       exerciseSessions: 'id, workoutSessionId, exerciseId, sortOrder',
       exerciseSets: 'id, exerciseSessionId, setNumber',
+    });
+    // Version 2: added settings table, isBarbell on exercises
+    this.version(2).stores({
+      .../* same as v1 */,
+      settings: 'key',
     });
   }
 }

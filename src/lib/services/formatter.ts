@@ -3,6 +3,11 @@ const numberFormat = new Intl.NumberFormat('de-DE', {
 	maximumFractionDigits: 1
 });
 
+const preciseNumberFormat = new Intl.NumberFormat('de-DE', {
+	minimumFractionDigits: 0,
+	maximumFractionDigits: 2
+});
+
 const volumeFormat = new Intl.NumberFormat('de-DE', {
 	minimumFractionDigits: 0,
 	maximumFractionDigits: 0
@@ -24,6 +29,10 @@ const shortDateFormat = new Intl.DateTimeFormat('de-DE', {
 
 export function formatWeight(kg: number): string {
 	return `${numberFormat.format(kg)} kg`;
+}
+
+export function formatWeightPrecise(kg: number): string {
+	return `${preciseNumberFormat.format(kg)} kg`;
 }
 
 export function formatVolume(kg: number): string {
