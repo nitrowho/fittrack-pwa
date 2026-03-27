@@ -81,6 +81,16 @@ Follow these architecture rules for all new code and when touching existing code
 - CSV export uses semicolons with German headers
 - Backup/restore: full DB dump as versioned JSON file
 
+## On-Demand Context
+
+Read these reference docs when working in the relevant area:
+
+| When working on... | Read |
+| --- | --- |
+| Frontend/UI work | `docs/ui-design.md` |
+| Data model changes | `docs/data-model.md` |
+| New features | `docs/features.md` |
+
 ## Reference
 
 - `docs/overview.md` — Project overview, tech stack, and summary
