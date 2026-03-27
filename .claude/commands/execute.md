@@ -33,7 +33,11 @@ After all tasks are done, run the full validation pyramid:
 3. Walk through the manual test steps defined in the plan
 4. Verify each success criterion from the plan
 
-### 4. Report
+### 4. Update documentation
+
+After all implementation is done, check in the `docs` folder if any of the documentation needs update. If so, make the updates. 
+
+### 5. Report
 
 Summarize:
 
