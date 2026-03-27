@@ -6,18 +6,18 @@ When loading a barbell during a workout, users must mentally calculate which pla
 
 ## Success Criteria
 
-- [ ] User can configure barbell weight (default 20 kg) in settings
-- [ ] User can configure available plate denominations and optional quantities in settings
-- [ ] Default plate set ships with standard denominations: 20, 15, 10, 5, 2.5, 1.25 kg
-- [ ] User can add custom plate denominations (e.g. 0.5 kg)
-- [ ] Exercises have an optional `isBarbell` flag (default: false)
-- [ ] Seed exercises that use a barbell (Kniebeuge, Bankdruecken, Langhantelrudern, Rumaenisches Kreuzheben) are flagged
-- [ ] During a workout, barbell exercises show a small barbell icon next to the weight input
-- [ ] Tapping the icon opens a bottom sheet showing the plate breakdown per side
-- [ ] Calculator warns when target weight is impossible with available plates
-- [ ] Calculator warns when target weight is less than bar weight
-- [ ] Bottom sheet is dismissible (tap outside, swipe down, or X button)
-- [ ] All UI text is in German
+- [x] User can configure barbell weight (default 20 kg) in settings
+- [x] User can configure available plate denominations and optional quantities in settings
+- [x] Default plate set ships with standard denominations: 20, 15, 10, 5, 2.5, 1.25 kg
+- [x] User can add custom plate denominations (e.g. 0.5 kg)
+- [x] Exercises have an optional `isBarbell` flag (default: false)
+- [x] Seed exercises that use a barbell (Kniebeuge, Bankdruecken, Langhantelrudern, Rumaenisches Kreuzheben) are flagged
+- [x] During a workout, barbell exercises show a small barbell icon next to the weight input
+- [x] Tapping the icon opens a bottom sheet showing the plate breakdown per side
+- [x] Calculator warns when target weight is impossible with available plates
+- [x] Calculator warns when target weight is less than bar weight
+- [x] Bottom sheet is dismissible (tap outside, swipe down, or X button)
+- [x] All UI text is in German
 
 ## Design Decisions
 
@@ -96,54 +96,54 @@ export interface PlateResult {
 
 ### Phase 1: Data model & plate calculation (pure logic, no UI)
 
-- [ ] **1.1** Add types — `src/lib/models/types.ts`: add `isBarbell` to `Exercise`, add `PlateDefinition`, `PlateConfig`, `PlateResult`
-- [ ] **1.2** Create plate calculator — `src/lib/domain/plates/calculator.ts`: pure function `calculatePlates(targetWeight: number, config: PlateConfig): PlateResult`. Greedy algorithm, handles edge cases (weight < bar, impossible combos, zero weight)
-- [ ] **1.3** DB migration — `src/lib/db/database.ts`: bump to version 2, add `settings` table (`key` as primary index), add upgrade handler to set `isBarbell = false` on all existing exercises
-- [ ] **1.4** Settings repository — `src/lib/repositories/settings-repository.ts`: `getPlateConfig()`, `savePlateConfig()` using the `settings` table with key `'plateConfig'`
-- [ ] **1.5** Settings queries/commands — `src/lib/application/settings/queries.ts`: `getPlateConfig()` with default fallback. Update `src/lib/application/settings/commands.ts`: add `savePlateConfig()`
-- [ ] **1.6** Exercise repository — `src/lib/repositories/exercise-repository.ts`: include `isBarbell` in `ExerciseRecord`, `createExercise`, `updateExercise`
-- [ ] **1.7** Exercise commands — `src/lib/application/exercises/commands.ts`: add `isBarbell` to `SaveExerciseInput`
-- [ ] **1.8** Seed data — `src/lib/db/seed.ts`: set `isBarbell: true` on Kniebeuge, Bankdruecken, Langhantelrudern, Rumaenisches Kreuzheben. Seed default `PlateConfig` with barWeight=20 and plates [20, 15, 10, 5, 2.5, 1.25] (all unlimited)
+- [x] **1.1** Add types — `src/lib/models/types.ts`: add `isBarbell` to `Exercise`, add `PlateDefinition`, `PlateConfig`, `PlateResult`
+- [x] **1.2** Create plate calculator — `src/lib/domain/plates/calculator.ts`: pure function `calculatePlates(targetWeight: number, config: PlateConfig): PlateResult`. Greedy algorithm, handles edge cases (weight < bar, impossible combos, zero weight)
+- [x] **1.3** DB migration — `src/lib/db/database.ts`: bump to version 2, add `settings` table (`key` as primary index), add upgrade handler to set `isBarbell = false` on all existing exercises
+- [x] **1.4** Settings repository — `src/lib/repositories/settings-repository.ts`: `getPlateConfig()`, `savePlateConfig()` using the `settings` table with key `'plateConfig'`
+- [x] **1.5** Settings queries/commands — `src/lib/application/settings/queries.ts`: `getPlateConfig()` with default fallback. Update `src/lib/application/settings/commands.ts`: add `savePlateConfig()`
+- [x] **1.6** Exercise repository — `src/lib/repositories/exercise-repository.ts`: include `isBarbell` in `ExerciseRecord`, `createExercise`, `updateExercise`
+- [x] **1.7** Exercise commands — `src/lib/application/exercises/commands.ts`: add `isBarbell` to `SaveExerciseInput`
+- [x] **1.8** Seed data — `src/lib/db/seed.ts`: set `isBarbell: true` on Kniebeuge, Bankdruecken, Langhantelrudern, Rumaenisches Kreuzheben. Seed default `PlateConfig` with barWeight=20 and plates [20, 15, 10, 5, 2.5, 1.25] (all unlimited)
 
 ### Phase 2: Settings UI
 
-- [ ] **2.1** Plate config settings section — `src/routes/settings/+page.svelte`: add "Hantelscheiben" section with:
+- [x] **2.1** Plate config settings section — `src/routes/settings/+page.svelte`: add "Hantelscheiben" section with:
   - Bar weight input (number, step 0.5, default 20)
   - List of plate denominations, each with weight display and optional quantity input
   - Add custom plate button (weight input)
   - Remove plate button (per denomination)
   - Save button (persists to IndexedDB)
-- [ ] **2.2** Exercise barbell toggle — `src/routes/exercises/+page.svelte`: add "Langhantel-Übung" toggle (checkbox/switch) to exercise create/edit form
+- [x] **2.2** Exercise barbell toggle — `src/routes/exercises/+page.svelte`: add "Langhantel-Übung" toggle (checkbox/switch) to exercise create/edit form
 
 ### Phase 3: Plate calculator bottom sheet
 
-- [ ] **3.1** Bottom sheet component — `src/lib/components/PlateCalculatorSheet.svelte`:
+- [x] **3.1** Bottom sheet component — `src/lib/components/PlateCalculatorSheet.svelte`:
   - Slide-up modal with backdrop
   - Shows target weight, bar weight
   - Plate breakdown "Je Seite:" with formatted list
   - Warning if impossible or below bar weight
   - Close button + tap-outside-to-dismiss
   - German text, dark mode support
-- [ ] **3.2** Integrate into SetRow — `src/lib/components/SetRow.svelte`:
+- [x] **3.2** Integrate into SetRow — `src/lib/components/SetRow.svelte`:
   - Accept new prop `isBarbell: boolean` (default false)
   - When `isBarbell` and weight > 0: show small barbell SVG icon button after the "kg" label
   - On tap: open PlateCalculatorSheet with current weight
-- [ ] **3.3** Wire through ExerciseCard — `src/lib/components/ExerciseCard.svelte`:
+- [x] **3.3** Wire through ExerciseCard — `src/lib/components/ExerciseCard.svelte`:
   - Accept `isBarbell` prop
   - Pass it down to each `SetRow`
-- [ ] **3.4** Wire through workout page — `src/routes/workout/[id]/+page.svelte`:
+- [x] **3.4** Wire through workout page — `src/routes/workout/[id]/+page.svelte`:
   - Load exercise records (or at least their `isBarbell` flags) for the active session
   - Pass `isBarbell` to each `ExerciseCard` based on `exerciseSession.exerciseId`
 
 ### Phase 4: Polish & edge cases
 
-- [ ] **4.1** Plate config loading in workout — ensure plate config is loaded once when the workout page mounts and passed/available to the bottom sheet (avoid repeated DB reads on every tap)
-- [ ] **4.2** Handle edge cases in UI:
+- [x] **4.1** Plate config loading in workout — ensure plate config is loaded once when the workout page mounts and passed/available to the bottom sheet (avoid repeated DB reads on every tap)
+- [x] **4.2** Handle edge cases in UI:
   - Weight is 0 or empty: don't show barbell icon
   - Weight equals bar weight: show "Keine Scheiben nötig" (no plates needed)
   - Weight is less than bar weight: show warning "Gewicht ist geringer als Stangengewicht (X kg)"
   - Impossible weight: show warning "Dieses Gewicht ist mit den verfügbaren Scheiben nicht möglich. Nächstmögliches Gewicht: X kg"
-- [ ] **4.3** Type check — run `pnpm run check` and fix any type errors
+- [x] **4.3** Type check — run `pnpm run check` and fix any type errors
 
 ## Validation Strategy
 
