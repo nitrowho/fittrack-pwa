@@ -4,19 +4,26 @@
 	import { page } from '$app/state';
 	import { base } from '$app/paths';
 	import { getWorkoutProgressions } from '$lib/application/workouts/queries.js';
+	import { getPlateConfig } from '$lib/application/settings/queries.js';
+	import { listExercises } from '$lib/application/exercises/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { timerStore } from '$lib/stores/timer.svelte.js';
 	import { formatDuration, formatVolume, formatVolumeDelta } from '$lib/services/formatter.js';
 	import ExerciseCard from '$lib/components/ExerciseCard.svelte';
 	import ExercisePickerModal from '$lib/components/ExercisePickerModal.svelte';
+	import PlateCalculatorSheet from '$lib/components/PlateCalculatorSheet.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
-	import type { Exercise, ExerciseSet } from '$lib/models/types.js';
+	import type { Exercise, ExerciseSet, PlateConfig } from '$lib/models/types.js';
 
 	let progressions = $state<Map<string, ProgressionResult>>(new Map());
 	let showFinishDialog = $state(false);
 	let showCancelDialog = $state(false);
 	let showExercisePicker = $state(false);
+	let barbellExerciseIds = $state<Set<string>>(new Set());
+	let plateConfig = $state<PlateConfig>({ barWeight: 20, plates: [] });
+	let showPlateCalc = $state(false);
+	let plateCalcWeight = $state(0);
 
 	onMount(async () => {
 		const id = page.params.id as string;
@@ -27,8 +34,22 @@
 			goto(`${base}/`);
 			return;
 		}
-		await loadProgressions();
+		await Promise.all([loadProgressions(), loadBarbellFlags(), loadPlateConfig()]);
 	});
+
+	async function loadBarbellFlags() {
+		const exercises = await listExercises();
+		barbellExerciseIds = new Set(exercises.filter((e) => e.isBarbell).map((e) => e.id));
+	}
+
+	async function loadPlateConfig() {
+		plateConfig = await getPlateConfig();
+	}
+
+	function handleOpenPlateCalc(weight: number) {
+		plateCalcWeight = weight;
+		showPlateCalc = true;
+	}
 
 	async function loadProgressions() {
 		progressions = await getWorkoutProgressions(workoutStore.exerciseSessions);
@@ -119,12 +140,13 @@
 		</div>
 
 		<!-- Exercise cards -->
-		{#each workoutStore.exerciseSessions as es}
+		{#each workoutStore.orderedExerciseSessions as es}
 			<ExerciseCard
 				exerciseSession={es}
 				sets={workoutStore.sets.get(es.id) ?? []}
 				lastSession={workoutStore.lastSessionData.get(es.id) ?? null}
 				progression={progressions.get(es.id) ?? { type: 'none' }}
+				isBarbell={barbellExerciseIds.has(es.exerciseId)}
 				oncomplete={handleComplete}
 				onuncomplete={handleUncomplete}
 				onupdate={handleUpdate}
@@ -132,6 +154,7 @@
 				onremoveset={handleRemoveSet}
 				onapplyweight={handleApplyWeight}
 				onremoveexercise={handleRemoveExercise}
+				onopenplatecalc={handleOpenPlateCalc}
 			/>
 		{/each}
 
@@ -187,5 +210,12 @@
 		excludeExerciseIds={usedExerciseIds}
 		onselect={handleAddExercise}
 		onclose={() => (showExercisePicker = false)}
+	/>
+
+	<PlateCalculatorSheet
+		open={showPlateCalc}
+		targetWeight={plateCalcWeight}
+		{plateConfig}
+		onclose={() => (showPlateCalc = false)}
 	/>
 {/if}

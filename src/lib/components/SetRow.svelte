@@ -5,12 +5,14 @@
 	interface Props {
 		set: ExerciseSet;
 		lastSet?: ExerciseSet | null;
+		isBarbell?: boolean;
 		oncomplete: (setId: string, weight: number, reps: number) => void;
 		onuncomplete: (setId: string) => void;
 		onupdate: (setId: string, changes: Partial<ExerciseSet>) => void;
+		onopenplatecalc?: (weight: number) => void;
 	}
 
-	let { set, lastSet = null, oncomplete, onuncomplete, onupdate }: Props = $props();
+	let { set, lastSet = null, isBarbell = false, oncomplete, onuncomplete, onupdate, onopenplatecalc }: Props = $props();
 
 	function handleToggle() {
 		if (set.isCompleted) {
@@ -49,6 +51,22 @@
 		aria-label="Gewicht (kg)"
 	/>
 	<span class="text-xs text-gray-400">kg</span>
+
+	{#if isBarbell && set.weight > 0 && onopenplatecalc}
+		<button
+			onclick={() => onopenplatecalc!(set.weight)}
+			class="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 hover:text-blue-500"
+			aria-label="Hantelscheiben-Rechner"
+		>
+			<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<rect x="2" y="9" width="3" height="6" rx="0.5" />
+				<rect x="19" y="9" width="3" height="6" rx="0.5" />
+				<rect x="5" y="7" width="3" height="10" rx="0.5" />
+				<rect x="16" y="7" width="3" height="10" rx="0.5" />
+				<line x1="8" y1="12" x2="16" y2="12" />
+			</svg>
+		</button>
+	{/if}
 
 	<input
 		type="number"

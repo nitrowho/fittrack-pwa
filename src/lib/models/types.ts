@@ -20,6 +20,25 @@ export interface Exercise {
 	id: string;
 	name: string;
 	muscleGroup: MuscleGroup | null;
+	isBarbell: boolean;
+}
+
+export interface PlateDefinition {
+	weight: number;
+	quantity?: number;
+}
+
+export interface PlateConfig {
+	barWeight: number;
+	plates: PlateDefinition[];
+}
+
+export interface PlateResult {
+	perSide: { weight: number; count: number }[];
+	totalWeight: number;
+	impossible: boolean;
+	remainder: number;
+	belowBarWeight: boolean;
 }
 
 export interface WorkoutTemplate {

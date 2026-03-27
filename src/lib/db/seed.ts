@@ -7,11 +7,16 @@ export async function seedDatabase(): Promise<void> {
 	if (count > 0) return;
 
 	const exercises: Exercise[] = [
-		{ id: createUuid(), name: 'Kniebeuge', muscleGroup: 'beine' },
-		{ id: createUuid(), name: 'Bankdrücken', muscleGroup: 'brust' },
-		{ id: createUuid(), name: 'Chin-Ups', muscleGroup: 'ruecken' },
-		{ id: createUuid(), name: 'Langhantelrudern Obergriff', muscleGroup: 'ruecken' },
-		{ id: createUuid(), name: 'Rumänisches Kreuzheben', muscleGroup: 'beine' }
+		{ id: createUuid(), name: 'Kniebeuge', muscleGroup: 'beine', isBarbell: true },
+		{ id: createUuid(), name: 'Bankdrücken', muscleGroup: 'brust', isBarbell: true },
+		{ id: createUuid(), name: 'Chin-Ups', muscleGroup: 'ruecken', isBarbell: false },
+		{
+			id: createUuid(),
+			name: 'Langhantelrudern Obergriff',
+			muscleGroup: 'ruecken',
+			isBarbell: true
+		},
+		{ id: createUuid(), name: 'Rumänisches Kreuzheben', muscleGroup: 'beine', isBarbell: true }
 	];
 
 	const now = new Date();
@@ -108,11 +113,25 @@ export async function seedDatabase(): Promise<void> {
 
 	await db.transaction(
 		'rw',
-		[db.exercises, db.workoutTemplates, db.templateExercises],
+		[db.exercises, db.workoutTemplates, db.templateExercises, db.settings],
 		async () => {
 			await db.exercises.bulkAdd(exercises);
 			await db.workoutTemplates.bulkAdd(templates);
 			await db.templateExercises.bulkAdd(templateExercises);
+			await db.settings.put({
+				key: 'plateConfig',
+				value: {
+					barWeight: 20,
+					plates: [
+						{ weight: 20 },
+						{ weight: 15 },
+						{ weight: 10 },
+						{ weight: 5 },
+						{ weight: 2.5 },
+						{ weight: 1.25 }
+					]
+				}
+			});
 		}
 	);
 }

@@ -13,6 +13,7 @@
 	let editingId = $state<string | null>(null);
 	let formName = $state('');
 	let formMuscleGroup = $state<MuscleGroup | ''>('');
+	let formIsBarbell = $state(false);
 	let deleteTarget = $state<string | null>(null);
 	let dropdownOpen = $state(false);
 
@@ -39,6 +40,7 @@
 		editingId = null;
 		formName = '';
 		formMuscleGroup = '';
+		formIsBarbell = false;
 		dropdownOpen = false;
 		showForm = true;
 	}
@@ -47,6 +49,7 @@
 		editingId = exercise.id;
 		formName = exercise.name;
 		formMuscleGroup = exercise.muscleGroup ?? '';
+		formIsBarbell = exercise.isBarbell;
 		dropdownOpen = false;
 		showForm = true;
 	}
@@ -64,7 +67,12 @@
 		if (!formName.trim()) return;
 
 		const mg = formMuscleGroup || null;
-		await persistExercise({ id: editingId ?? undefined, name: formName, muscleGroup: mg });
+		await persistExercise({
+			id: editingId ?? undefined,
+			name: formName,
+			muscleGroup: mg,
+			isBarbell: formIsBarbell
+		});
 
 		showForm = false;
 		await loadExercises();
@@ -132,6 +140,22 @@
 						{/each}
 					</div>
 				{/if}
+			</div>
+			<div class="mb-3 flex items-center gap-3">
+				<div
+					role="switch"
+					aria-checked={formIsBarbell}
+					aria-label="Langhantel-Übung"
+					tabindex="0"
+					onclick={() => (formIsBarbell = !formIsBarbell)}
+					onkeydown={(e: KeyboardEvent) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); formIsBarbell = !formIsBarbell; } }}
+					class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors {formIsBarbell ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}"
+				>
+					<span
+						class="inline-block h-4 w-4 rounded-full bg-white transition-transform {formIsBarbell ? 'translate-x-6' : 'translate-x-1'}"
+					></span>
+				</div>
+				<span class="text-sm">Langhantel-Übung</span>
 			</div>
 			<div class="flex gap-2">
 				<button

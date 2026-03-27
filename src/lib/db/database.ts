@@ -8,6 +8,11 @@ import type {
 	ExerciseSet
 } from '$lib/models/types.js';
 
+interface SettingsRecord {
+	key: string;
+	value: unknown;
+}
+
 class FitTrackDB extends Dexie {
 	exercises!: Table<Exercise>;
 	workoutTemplates!: Table<WorkoutTemplate>;
@@ -15,6 +20,7 @@ class FitTrackDB extends Dexie {
 	workoutSessions!: Table<WorkoutSession>;
 	exerciseSessions!: Table<ExerciseSession>;
 	exerciseSets!: Table<ExerciseSet>;
+	settings!: Table<SettingsRecord>;
 
 	constructor() {
 		super('fittrack');
@@ -26,6 +32,35 @@ class FitTrackDB extends Dexie {
 			exerciseSessions: 'id, workoutSessionId, exerciseId, sortOrder',
 			exerciseSets: 'id, exerciseSessionId, setNumber'
 		});
+
+		this.version(2)
+			.stores({
+				exercises: 'id, name, muscleGroup',
+				workoutTemplates: 'id, sortOrder',
+				templateExercises: 'id, templateId, exerciseId, sortOrder',
+				workoutSessions: 'id, templateId, startedAt, completedAt',
+				exerciseSessions: 'id, workoutSessionId, exerciseId, sortOrder',
+				exerciseSets: 'id, exerciseSessionId, setNumber',
+				settings: 'key'
+			})
+			.upgrade((tx) => {
+				const barbellNames = [
+					'kniebeuge',
+					'bankdrücken',
+					'bankdruecken',
+					'langhantelrudern',
+					'kreuzheben'
+				];
+				return tx
+					.table('exercises')
+					.toCollection()
+					.modify((exercise) => {
+						if (exercise.isBarbell === undefined) {
+							const nameLower = (exercise.name as string).toLowerCase();
+							exercise.isBarbell = barbellNames.some((b) => nameLower.includes(b));
+						}
+					});
+			});
 	}
 }
 

@@ -5,6 +5,7 @@ export interface ExerciseRecord {
 	id: string;
 	name: string;
 	muscleGroup: MuscleGroup | null;
+	isBarbell: boolean;
 }
 
 export async function listExercisesByName(): Promise<Exercise[]> {
@@ -17,7 +18,7 @@ export async function createExercise(record: ExerciseRecord): Promise<void> {
 
 export async function updateExercise(
 	id: string,
-	changes: Pick<ExerciseRecord, 'name' | 'muscleGroup'>
+	changes: Pick<ExerciseRecord, 'name' | 'muscleGroup' | 'isBarbell'>
 ): Promise<void> {
 	await db.exercises.update(id, changes);
 }

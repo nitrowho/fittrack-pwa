@@ -10,6 +10,7 @@ export interface SaveExerciseInput {
 	id?: string;
 	name: string;
 	muscleGroup: MuscleGroup | null;
+	isBarbell: boolean;
 }
 
 export async function saveExercise(input: SaveExerciseInput): Promise<string> {
@@ -19,12 +20,16 @@ export async function saveExercise(input: SaveExerciseInput): Promise<string> {
 	}
 
 	if (input.id) {
-		await updateExercise(input.id, { name, muscleGroup: input.muscleGroup });
+		await updateExercise(input.id, {
+			name,
+			muscleGroup: input.muscleGroup,
+			isBarbell: input.isBarbell
+		});
 		return input.id;
 	}
 
 	const id = createUuid();
-	await createExercise({ id, name, muscleGroup: input.muscleGroup });
+	await createExercise({ id, name, muscleGroup: input.muscleGroup, isBarbell: input.isBarbell });
 	return id;
 }
 

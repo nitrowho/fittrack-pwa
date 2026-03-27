@@ -11,6 +11,8 @@ import {
 	type ExportExerciseSession,
 	type ExportWorkoutSession
 } from '$lib/services/export.js';
+import { savePlateConfig as savePlateConfigToRepo } from '$lib/repositories/settings-repository.js';
+import type { PlateConfig } from '$lib/models/types.js';
 
 async function getCompletedExportSessions(): Promise<ExportWorkoutSession[]> {
 	const [sessions, exerciseSessions, exerciseSets] = await Promise.all([
@@ -73,4 +75,8 @@ export async function downloadJsonExport(): Promise<void> {
 	const blob = createJsonExport(sessions);
 	const date = new Date().toISOString().split('T')[0];
 	downloadBlob(blob, `fittrack-export-${date}.json`);
+}
+
+export async function savePlateConfig(config: PlateConfig): Promise<void> {
+	await savePlateConfigToRepo(config);
 }
