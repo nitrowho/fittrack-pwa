@@ -25,7 +25,18 @@ class WorkoutStore {
 	exerciseSessions = $state<ExerciseSession[]>([]);
 	sets = $state<Map<string, ExerciseSet[]>>(new Map());
 	lastSessionData = $state<Map<string, LastSessionData | null>>(new Map());
+	private startedExerciseOrder = $state<string[]>([]);
 	private wakeLock: WakeLockSentinel | null = null;
+
+	get orderedExerciseSessions(): ExerciseSession[] {
+		const started = this.startedExerciseOrder
+			.map((id) => this.exerciseSessions.find((es) => es.id === id))
+			.filter((es): es is ExerciseSession => es !== undefined);
+		const unstarted = this.exerciseSessions.filter(
+			(es) => !this.startedExerciseOrder.includes(es.id)
+		);
+		return [...started, ...unstarted];
+	}
 
 	get isActive(): boolean {
 		return this.session !== null;
@@ -98,6 +109,7 @@ class WorkoutStore {
 		this.sets = new Map(this.sets);
 		this.lastSessionData.delete(exerciseSessionId);
 		this.lastSessionData = new Map(this.lastSessionData);
+		this.startedExerciseOrder = this.startedExerciseOrder.filter((id) => id !== exerciseSessionId);
 	}
 
 	async resumeWorkout(sessionId: string): Promise<void> {
@@ -122,6 +134,10 @@ class WorkoutStore {
 
 		const exerciseSessionId = this.findExerciseSessionForSet(setId);
 		if (exerciseSessionId) {
+			if (!this.startedExerciseOrder.includes(exerciseSessionId)) {
+				this.startedExerciseOrder = [...this.startedExerciseOrder, exerciseSessionId];
+			}
+
 			const exerciseSets = this.sets.get(exerciseSessionId) ?? [];
 			const allSetsCompleted = exerciseSets.every((set) => set.isCompleted);
 			if (!allSetsCompleted) {
@@ -239,6 +255,37 @@ class WorkoutStore {
 		this.exerciseSessions = snapshot.exerciseSessions;
 		this.sets = new Map(snapshot.sets);
 		this.lastSessionData = new Map(snapshot.lastSessionData);
+		this.startedExerciseOrder = this.buildStartedOrder(snapshot.exerciseSessions, snapshot.sets);
+	}
+
+	private buildStartedOrder(
+		sessions: ExerciseSession[],
+		sets: Map<string, ExerciseSet[]>
+	): string[] {
+		return sessions
+			.filter((es) => {
+				const exerciseSets = sets.get(es.id) ?? [];
+				return exerciseSets.some((s) => s.isCompleted);
+			})
+			.sort((a, b) => {
+				const aFirst = this.earliestCompletion(sets.get(a.id) ?? []);
+				const bFirst = this.earliestCompletion(sets.get(b.id) ?? []);
+				return aFirst - bFirst;
+			})
+			.map((es) => es.id);
+	}
+
+	private earliestCompletion(exerciseSets: ExerciseSet[]): number {
+		let earliest = Infinity;
+		for (const s of exerciseSets) {
+			if (s.completedAt) {
+				const time = s.completedAt.getTime();
+				if (time < earliest) {
+					earliest = time;
+				}
+			}
+		}
+		return earliest;
 	}
 
 	private reset() {
@@ -246,6 +293,7 @@ class WorkoutStore {
 		this.exerciseSessions = [];
 		this.sets = new Map();
 		this.lastSessionData = new Map();
+		this.startedExerciseOrder = [];
 		timerStore.stopSession();
 		this.releaseWakeLock();
 	}

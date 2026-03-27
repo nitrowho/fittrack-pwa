@@ -119,7 +119,7 @@
 		</div>
 
 		<!-- Exercise cards -->
-		{#each workoutStore.exerciseSessions as es}
+		{#each workoutStore.orderedExerciseSessions as es}
 			<ExerciseCard
 				exerciseSession={es}
 				sets={workoutStore.sets.get(es.id) ?? []}
