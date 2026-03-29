@@ -289,7 +289,7 @@
 
 	<!-- About -->
 	<section>
-		<p class="text-center text-xs text-gray-400">FitTrack PWA v0.1.0</p>
+		<p class="text-center text-xs text-gray-400">FitTrack PWA v{__APP_VERSION__}</p>
 	</section>
 </div>
 
