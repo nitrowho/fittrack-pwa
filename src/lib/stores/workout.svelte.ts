@@ -28,6 +28,16 @@ class WorkoutStore {
 	private startedExerciseOrder = $state<string[]>([]);
 	private wakeLock: WakeLockSentinel | null = null;
 
+	constructor() {
+		if (typeof document !== 'undefined') {
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'visible' && this.isActive) {
+					this.acquireWakeLock();
+				}
+			});
+		}
+	}
+
 	get orderedExerciseSessions(): ExerciseSession[] {
 		const started = this.startedExerciseOrder
 			.map((id) => this.exerciseSessions.find((es) => es.id === id))
