@@ -48,16 +48,28 @@ export function formatShortDate(date: Date): string {
 }
 
 export function formatDuration(seconds: number): string {
-	const mins = Math.floor(seconds / 60);
+	const totalMins = Math.floor(seconds / 60);
 	const secs = Math.floor(seconds % 60);
-	return `${mins}:${secs.toString().padStart(2, '0')}`;
+	if (totalMins >= 60) {
+		const hours = Math.floor(totalMins / 60);
+		const mins = totalMins % 60;
+		return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+	}
+	return `${totalMins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function formatRestDuration(seconds: number): string {
-	const mins = Math.floor(seconds / 60);
+	const totalMins = Math.floor(seconds / 60);
 	const secs = seconds % 60;
-	if (secs === 0) return `${mins} Min`;
-	return `${mins}:${secs.toString().padStart(2, '0')} Min`;
+	if (totalMins >= 60) {
+		const hours = Math.floor(totalMins / 60);
+		const mins = totalMins % 60;
+		if (secs === 0 && mins === 0) return `${hours} Std`;
+		if (secs === 0) return `${hours}:${mins.toString().padStart(2, '0')} Std`;
+		return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} Std`;
+	}
+	if (secs === 0) return `${totalMins} Min`;
+	return `${totalMins}:${secs.toString().padStart(2, '0')} Min`;
 }
 
 export function formatTimer(seconds: number): string {
