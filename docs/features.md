@@ -57,12 +57,29 @@ Comparison is always **per-exercise**, not per-template. When doing Workout A co
 - **Per-set**: Show "Vorher: X kg × Y" below each set row
 - **Session header**: Total volume delta (sum of all per-exercise deltas)
 
-## History
+## History & Statistics
 
+The history tab has a segmented control to switch between **Verlauf** (history list) and **Statistiken** (statistics).
+
+### Verlauf (History)
+- **Calendar**: Training days highlighted with muscle group color dots
 - **List**: All completed sessions, sorted by `startedAt` descending
 - **Row**: Template name, date, duration, total volume
-- **Swipe to delete**: Swipe gesture or delete button
+- **Bulk edit mode**: Select and delete multiple sessions
 - **Detail view**: Duration, volume, duration/volume deltas vs. previous session, per-exercise breakdown with sets, progression insights, notes
+
+### Statistiken (Statistics)
+- **Time period toggle**: Woche / Monat / Gesamt — controls all displayed stats
+- **Summary cards**: Workout count, total volume, average duration for the selected period
+- **Training streak**: Current streak and best streak (consecutive weeks with at least one workout)
+- **Volume trend chart**: Line chart (Chart.js) showing volume over time — daily for week, weekly for month, monthly for all-time
+- **Muscle group distribution**: Doughnut chart (Chart.js) showing volume percentage per muscle group with color-coded legend
+- **Personal records**: All-time best weight and estimated 1RM (Epley formula) per exercise, sorted by 1RM descending
+
+### Dashboard Stats Card
+- Compact card on the home page showing weekly summary: workout count, total volume, current streak
+- Tapping navigates to the full statistics view
+- Only shown when the user has completed at least one session or has an active streak
 
 ## Templates
 

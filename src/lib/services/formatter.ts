@@ -104,3 +104,13 @@ export function formatCalendarDate(date: Date): string {
 export function formatMonthName(year: number, month: number): string {
 	return monthNameFormat.format(new Date(year, month, 1));
 }
+
+export function formatCompactVolume(kg: number): string {
+	if (kg >= 1_000_000) {
+		return `${numberFormat.format(kg / 1_000_000)}M kg`;
+	}
+	if (kg >= 10_000) {
+		return `${numberFormat.format(kg / 1_000)}k kg`;
+	}
+	return `${volumeFormat.format(kg)} kg`;
+}

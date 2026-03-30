@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
+	import { page } from '$app/state';
 	import { deleteHistorySession } from '$lib/application/history/commands.js';
 	import {
 		getCalendarMonthData,
@@ -12,6 +13,13 @@
 	import { formatShortDate, formatDuration, formatVolume } from '$lib/services/formatter.js';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import TrainingCalendar from '$lib/components/TrainingCalendar.svelte';
+	import StatsOverview from '$lib/components/statistics/StatsOverview.svelte';
+
+	type TabView = 'history' | 'stats';
+
+	let activeTab = $state<TabView>(
+		page.url.searchParams.get('tab') === 'stats' ? 'stats' : 'history'
+	);
 
 	let sessions = $state<HistorySessionListItem[]>([]);
 	let editing = $state(false);
@@ -91,7 +99,7 @@
 <div class="space-y-4 p-4">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold">Verlauf</h1>
-		{#if sessions.length > 0}
+		{#if activeTab === 'history' && sessions.length > 0}
 			<button
 				onclick={toggleEditing}
 				class="text-sm font-medium text-blue-500"
@@ -100,6 +108,30 @@
 			</button>
 		{/if}
 	</div>
+
+	<!-- Segmented control -->
+	<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+		<button
+			onclick={() => { activeTab = 'history'; editing = false; }}
+			class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'history'
+				? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+				: 'text-gray-500 dark:text-gray-400'}"
+		>
+			Verlauf
+		</button>
+		<button
+			onclick={() => { activeTab = 'stats'; editing = false; }}
+			class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'stats'
+				? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+				: 'text-gray-500 dark:text-gray-400'}"
+		>
+			Statistiken
+		</button>
+	</div>
+
+	{#if activeTab === 'stats'}
+		<StatsOverview />
+	{:else}
 
 	{#if !editing}
 		<TrainingCalendar
@@ -188,6 +220,8 @@
 				{/each}
 			</div>
 		{/if}
+	{/if}
+
 	{/if}
 </div>
 
