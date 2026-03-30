@@ -2,19 +2,56 @@
 	import { onMount } from 'svelte';
 	import { base } from '$app/paths';
 	import { deleteHistorySession } from '$lib/application/history/commands.js';
-	import { listHistorySessions, type HistorySessionListItem } from '$lib/application/history/queries.js';
+	import {
+		getCalendarMonthData,
+		listHistorySessions,
+		type CalendarDayData,
+		type HistorySessionListItem
+	} from '$lib/application/history/queries.js';
+	import { toDateKey } from '$lib/application/history/calendar.js';
 	import { formatShortDate, formatDuration, formatVolume } from '$lib/services/formatter.js';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import TrainingCalendar from '$lib/components/TrainingCalendar.svelte';
 
 	let sessions = $state<HistorySessionListItem[]>([]);
 	let editing = $state(false);
 	let selected = $state<Set<string>>(new Set());
 	let showDeleteDialog = $state(false);
 
-	onMount(loadSessions);
+	let calendarYear = $state(new Date().getFullYear());
+	let calendarMonth = $state(new Date().getMonth());
+	let trainingDays = $state<Map<string, CalendarDayData>>(new Map());
+	let selectedDate = $state<string | null>(null);
+
+	let displayedSessions = $derived(
+		selectedDate
+			? sessions.filter((s) => toDateKey(s.session.startedAt) === selectedDate)
+			: sessions
+	);
+
+	onMount(loadData);
+
+	async function loadData() {
+		await Promise.all([loadSessions(), loadCalendar()]);
+	}
 
 	async function loadSessions() {
 		sessions = await listHistorySessions();
+	}
+
+	async function loadCalendar() {
+		trainingDays = await getCalendarMonthData(calendarYear, calendarMonth);
+	}
+
+	function handleNavigate(year: number, month: number) {
+		calendarYear = year;
+		calendarMonth = month;
+		selectedDate = null;
+		loadCalendar();
+	}
+
+	function handleSelectDate(dateKey: string | null) {
+		selectedDate = dateKey;
 	}
 
 	function toggleEditing() {
@@ -33,10 +70,10 @@
 	}
 
 	function toggleSelectAll() {
-		if (selected.size === sessions.length) {
+		if (selected.size === displayedSessions.length) {
 			selected = new Set();
 		} else {
-			selected = new Set(sessions.map((s) => s.session.id));
+			selected = new Set(displayedSessions.map((s) => s.session.id));
 		}
 	}
 
@@ -47,7 +84,7 @@
 		showDeleteDialog = false;
 		selected = new Set();
 		editing = false;
-		await loadSessions();
+		await loadData();
 	}
 </script>
 
@@ -64,13 +101,36 @@
 		{/if}
 	</div>
 
+	{#if !editing}
+		<TrainingCalendar
+			year={calendarYear}
+			month={calendarMonth}
+			{trainingDays}
+			{selectedDate}
+			onselect={handleSelectDate}
+			onnavigate={handleNavigate}
+		/>
+	{/if}
+
+	{#if selectedDate}
+		<button
+			onclick={() => (selectedDate = null)}
+			class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+		>
+			Alle anzeigen
+			<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+			</svg>
+		</button>
+	{/if}
+
 	{#if sessions.length === 0}
 		<p class="text-sm text-gray-500">Noch keine Einheiten</p>
 	{:else}
 		{#if editing}
 			<div class="flex items-center justify-between text-sm">
 				<button onclick={toggleSelectAll} class="font-medium text-blue-500">
-					{selected.size === sessions.length ? 'Keine auswählen' : 'Alle auswählen'}
+					{selected.size === displayedSessions.length ? 'Keine auswählen' : 'Alle auswählen'}
 				</button>
 				<span class="text-gray-500">
 					{selected.size} ausgewählt
@@ -78,21 +138,41 @@
 			</div>
 		{/if}
 
-		<div class="space-y-2">
-			{#each sessions as item}
-				{#if editing}
-					<button
-						onclick={() => toggleSelect(item.session.id)}
-						class="flex w-full items-center gap-3 text-left"
-					>
-						<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 {selected.has(item.session.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600'}">
-							{#if selected.has(item.session.id)}
-								<svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-									<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-								</svg>
-							{/if}
-						</div>
-						<div class="flex-1 rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+		{#if displayedSessions.length === 0 && selectedDate}
+			<p class="text-sm text-gray-500">Keine Einheiten an diesem Tag</p>
+		{:else}
+			<div class="space-y-2">
+				{#each displayedSessions as item}
+					{#if editing}
+						<button
+							onclick={() => toggleSelect(item.session.id)}
+							class="flex w-full items-center gap-3 text-left"
+						>
+							<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 {selected.has(item.session.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600'}">
+								{#if selected.has(item.session.id)}
+									<svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+										<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+									</svg>
+								{/if}
+							</div>
+							<div class="flex-1 rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+								<div class="flex items-center justify-between">
+									<h3 class="font-medium">{item.session.templateName}</h3>
+									<span class="text-xs text-gray-500">{formatShortDate(item.session.startedAt)}</span>
+								</div>
+								<div class="mt-1 flex gap-3 text-xs text-gray-500">
+									{#if item.session.completedAt}
+										<span>{formatDuration((item.session.completedAt.getTime() - item.session.startedAt.getTime()) / 1000)}</span>
+									{/if}
+									<span>{formatVolume(item.volume)}</span>
+								</div>
+							</div>
+						</button>
+					{:else}
+						<a
+							href="{base}/history/{item.session.id}"
+							class="block rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900"
+						>
 							<div class="flex items-center justify-between">
 								<h3 class="font-medium">{item.session.templateName}</h3>
 								<span class="text-xs text-gray-500">{formatShortDate(item.session.startedAt)}</span>
@@ -103,27 +183,11 @@
 								{/if}
 								<span>{formatVolume(item.volume)}</span>
 							</div>
-						</div>
-					</button>
-				{:else}
-					<a
-						href="{base}/history/{item.session.id}"
-						class="block rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900"
-					>
-						<div class="flex items-center justify-between">
-							<h3 class="font-medium">{item.session.templateName}</h3>
-							<span class="text-xs text-gray-500">{formatShortDate(item.session.startedAt)}</span>
-						</div>
-						<div class="mt-1 flex gap-3 text-xs text-gray-500">
-							{#if item.session.completedAt}
-								<span>{formatDuration((item.session.completedAt.getTime() - item.session.startedAt.getTime()) / 1000)}</span>
-							{/if}
-							<span>{formatVolume(item.volume)}</span>
-						</div>
-					</a>
-				{/if}
-			{/each}
-		</div>
+						</a>
+					{/if}
+				{/each}
+			</div>
+		{/if}
 	{/if}
 </div>
 

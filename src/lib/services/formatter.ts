@@ -87,3 +87,20 @@ export function formatVolumeDelta(delta: number): string {
 	const prefix = delta > 0 ? '+' : '';
 	return `${prefix}${volumeFormat.format(delta)} kg`;
 }
+
+const calendarDateFormat = new Intl.DateTimeFormat('de-DE', {
+	day: 'numeric',
+	month: 'long'
+});
+
+const monthNameFormat = new Intl.DateTimeFormat('de-DE', {
+	month: 'long'
+});
+
+export function formatCalendarDate(date: Date): string {
+	return calendarDateFormat.format(date);
+}
+
+export function formatMonthName(year: number, month: number): string {
+	return monthNameFormat.format(new Date(year, month, 1));
+}
