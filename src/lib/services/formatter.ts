@@ -48,16 +48,28 @@ export function formatShortDate(date: Date): string {
 }
 
 export function formatDuration(seconds: number): string {
-	const mins = Math.floor(seconds / 60);
+	const totalMins = Math.floor(seconds / 60);
 	const secs = Math.floor(seconds % 60);
-	return `${mins}:${secs.toString().padStart(2, '0')}`;
+	if (totalMins >= 60) {
+		const hours = Math.floor(totalMins / 60);
+		const mins = totalMins % 60;
+		return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+	}
+	return `${totalMins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export function formatRestDuration(seconds: number): string {
-	const mins = Math.floor(seconds / 60);
+	const totalMins = Math.floor(seconds / 60);
 	const secs = seconds % 60;
-	if (secs === 0) return `${mins} Min`;
-	return `${mins}:${secs.toString().padStart(2, '0')} Min`;
+	if (totalMins >= 60) {
+		const hours = Math.floor(totalMins / 60);
+		const mins = totalMins % 60;
+		if (secs === 0 && mins === 0) return `${hours} Std`;
+		if (secs === 0) return `${hours}:${mins.toString().padStart(2, '0')} Std`;
+		return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')} Std`;
+	}
+	if (secs === 0) return `${totalMins} Min`;
+	return `${totalMins}:${secs.toString().padStart(2, '0')} Min`;
 }
 
 export function formatTimer(seconds: number): string {
@@ -74,4 +86,31 @@ export function formatSetsReps(sets: number, lower: number, upper: number): stri
 export function formatVolumeDelta(delta: number): string {
 	const prefix = delta > 0 ? '+' : '';
 	return `${prefix}${volumeFormat.format(delta)} kg`;
+}
+
+const calendarDateFormat = new Intl.DateTimeFormat('de-DE', {
+	day: 'numeric',
+	month: 'long'
+});
+
+const monthNameFormat = new Intl.DateTimeFormat('de-DE', {
+	month: 'long'
+});
+
+export function formatCalendarDate(date: Date): string {
+	return calendarDateFormat.format(date);
+}
+
+export function formatMonthName(year: number, month: number): string {
+	return monthNameFormat.format(new Date(year, month, 1));
+}
+
+export function formatCompactVolume(kg: number): string {
+	if (kg >= 1_000_000) {
+		return `${numberFormat.format(kg / 1_000_000)}M kg`;
+	}
+	if (kg >= 10_000) {
+		return `${numberFormat.format(kg / 1_000)}k kg`;
+	}
+	return `${volumeFormat.format(kg)} kg`;
 }

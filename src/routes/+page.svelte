@@ -3,21 +3,25 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { getDashboardData, type DashboardTemplate } from '$lib/application/dashboard/queries.js';
+	import { getDashboardStats, type DashboardStats } from '$lib/application/statistics/queries.js';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { formatShortDate, formatDuration } from '$lib/services/formatter.js';
+	import DashboardStatsCard from '$lib/components/DashboardStatsCard.svelte';
 	import type { WorkoutSession } from '$lib/models/types.js';
 
 	let templates = $state<DashboardTemplate[]>([]);
 	let recentSessions = $state<WorkoutSession[]>([]);
 	let inProgressSession = $state<WorkoutSession | null>(null);
 	let lastCompletedTemplateId = $state<string | null>(null);
+	let dashboardStats = $state<DashboardStats | null>(null);
 
 	onMount(async () => {
-		const dashboard = await getDashboardData();
+		const [dashboard, stats] = await Promise.all([getDashboardData(), getDashboardStats()]);
 		templates = dashboard.templates;
 		recentSessions = dashboard.recentSessions;
 		inProgressSession = dashboard.inProgressSession;
 		lastCompletedTemplateId = dashboard.lastCompletedTemplateId;
+		dashboardStats = stats;
 	});
 
 	async function startWorkout(templateId: string) {
@@ -53,6 +57,11 @@
 			<p class="text-lg font-bold">{inProgressSession.templateName}</p>
 			<p class="mt-1 text-sm font-semibold">Fortsetzen &rarr;</p>
 		</a>
+	{/if}
+
+	<!-- Weekly stats summary -->
+	{#if dashboardStats && (dashboardStats.workoutsThisWeek > 0 || dashboardStats.currentStreak > 0)}
+		<DashboardStatsCard stats={dashboardStats} />
 	{/if}
 
 	<!-- Quick start -->

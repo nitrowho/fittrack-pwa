@@ -1,4 +1,4 @@
-import type { ExerciseSession, ExerciseSet, WorkoutSession } from '$lib/models/types.js';
+import type { ExerciseSession, ExerciseSet, MuscleGroup, WorkoutSession } from '$lib/models/types.js';
 import {
 	getWorkoutSession,
 	listAllExerciseSessions,
@@ -6,6 +6,7 @@ import {
 	listExerciseSessionsByWorkoutSessionId,
 	listWorkoutSessions
 } from '$lib/repositories/workout-repository.js';
+import { toDateKey } from './calendar.js';
 
 export interface HistorySessionListItem {
 	session: WorkoutSession;
@@ -22,6 +23,57 @@ export interface HistorySessionDetail {
 	exerciseSessions: HistoryExerciseSessionDetail[];
 	totalVolume: number;
 	duration: number;
+}
+
+export interface CalendarDayData {
+	sessionCount: number;
+	muscleGroups: MuscleGroup[];
+}
+
+export async function getCalendarMonthData(
+	year: number,
+	month: number
+): Promise<Map<string, CalendarDayData>> {
+	const [sessions, exerciseSessions] = await Promise.all([
+		listWorkoutSessions(),
+		listAllExerciseSessions()
+	]);
+
+	const monthStart = new Date(year, month, 1);
+	const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+	const completedInMonth = sessions.filter(
+		(s) =>
+			s.completedAt !== null &&
+			s.startedAt >= monthStart &&
+			s.startedAt <= monthEnd
+	);
+
+	const exercisesBySession = new Map<string, ExerciseSession[]>();
+	for (const es of exerciseSessions) {
+		const list = exercisesBySession.get(es.workoutSessionId) ?? [];
+		list.push(es);
+		exercisesBySession.set(es.workoutSessionId, list);
+	}
+
+	const result = new Map<string, CalendarDayData>();
+
+	for (const session of completedInMonth) {
+		const key = toDateKey(session.startedAt);
+		const existing = result.get(key) ?? { sessionCount: 0, muscleGroups: [] };
+		existing.sessionCount++;
+
+		const sessionExercises = exercisesBySession.get(session.id) ?? [];
+		for (const ex of sessionExercises) {
+			if (ex.muscleGroup && !existing.muscleGroups.includes(ex.muscleGroup)) {
+				existing.muscleGroups.push(ex.muscleGroup);
+			}
+		}
+
+		result.set(key, existing);
+	}
+
+	return result;
 }
 
 function calculateCompletedVolume(sets: ExerciseSet[]): number {

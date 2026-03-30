@@ -33,7 +33,7 @@
 				</svg>
 			{:else if tab.icon === 'history'}
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+					<path stroke-linecap="round" stroke-linejoin="round" d="M3 13h4l3-8 4 16 3-8h4" />
 				</svg>
 			{:else if tab.icon === 'templates'}
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -41,7 +41,7 @@
 				</svg>
 			{:else if tab.icon === 'exercises'}
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-					<path stroke-linecap="round" stroke-linejoin="round" d="M4 7h2m12 0h2M6 7v10M18 7v10M6 12h12M4 17h2m12 0h2M8 7v10M16 7v10" />
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6.5 6.5v11M17.5 6.5v11M6.5 12h11M4 8v8M20 8v8M2 10v4M22 10v4" />
 				</svg>
 			{:else if tab.icon === 'settings'}
 				<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

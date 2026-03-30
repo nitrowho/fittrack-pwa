@@ -1,7 +1,7 @@
 {
 	"name": "fittrack-pwa",
 	"private": true,
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"type": "module",
 	"packageManager": "pnpm@10.32.1",
 	"scripts": {
@@ -13,6 +13,7 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"dependencies": {
+		"chart.js": "^4.5.1",
 		"dexie": "^4.0.11"
 	},
 	"devDependencies": {
