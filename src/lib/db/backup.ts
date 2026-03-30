@@ -10,18 +10,20 @@ interface BackupData {
 		workoutSessions: unknown[];
 		exerciseSessions: unknown[];
 		exerciseSets: unknown[];
+		settings?: unknown[];
 	};
 }
 
 export async function createBackup(): Promise<Blob> {
-	const [exercises, workoutTemplates, templateExercises, workoutSessions, exerciseSessions, exerciseSets] =
+	const [exercises, workoutTemplates, templateExercises, workoutSessions, exerciseSessions, exerciseSets, settings] =
 		await Promise.all([
 			db.exercises.toArray(),
 			db.workoutTemplates.toArray(),
 			db.templateExercises.toArray(),
 			db.workoutSessions.toArray(),
 			db.exerciseSessions.toArray(),
-			db.exerciseSets.toArray()
+			db.exerciseSets.toArray(),
+			db.settings.toArray()
 		]);
 
 	const backup: BackupData = {
@@ -33,7 +35,8 @@ export async function createBackup(): Promise<Blob> {
 			templateExercises,
 			workoutSessions,
 			exerciseSessions,
-			exerciseSets
+			exerciseSets,
+			settings
 		}
 	};
 
@@ -80,7 +83,8 @@ export async function restoreBackup(file: File): Promise<void> {
 			db.templateExercises,
 			db.workoutSessions,
 			db.exerciseSessions,
-			db.exerciseSets
+			db.exerciseSets,
+			db.settings
 		],
 		async () => {
 			await db.exercises.clear();
@@ -89,6 +93,7 @@ export async function restoreBackup(file: File): Promise<void> {
 			await db.workoutSessions.clear();
 			await db.exerciseSessions.clear();
 			await db.exerciseSets.clear();
+			await db.settings.clear();
 
 			await db.exercises.bulkAdd(backup.data.exercises as never[]);
 			await db.workoutTemplates.bulkAdd(templates as never[]);
@@ -96,6 +101,10 @@ export async function restoreBackup(file: File): Promise<void> {
 			await db.workoutSessions.bulkAdd(sessions as never[]);
 			await db.exerciseSessions.bulkAdd(exerciseSessions as never[]);
 			await db.exerciseSets.bulkAdd(exerciseSets as never[]);
+
+			if (backup.data.settings?.length) {
+				await db.settings.bulkAdd(backup.data.settings as never[]);
+			}
 		}
 	);
 }
