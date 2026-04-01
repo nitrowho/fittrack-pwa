@@ -20,8 +20,8 @@
 
 	let { data }: Props = $props();
 
-	let canvas: HTMLCanvasElement;
-	let chart: Chart | null = null;
+	let canvas: HTMLCanvasElement = $state(undefined!);
+	let chart: Chart | null = $state(null);
 
 	function createChart() {
 		if (chart) {
