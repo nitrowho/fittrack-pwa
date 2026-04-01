@@ -72,19 +72,37 @@ function getMonthEnd(date: Date): Date {
 	return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
 }
 
-function getPeriodRange(period: StatsPeriod): { start: Date; end: Date } {
+function getPeriodRange(period: StatsPeriod, offset: number = 0): { start: Date; end: Date } {
 	const now = new Date();
 	switch (period) {
 		case 'week': {
-			const start = getWeekStart(now);
-			return { start, end: getWeekEnd(start) };
+			const base = getWeekStart(now);
+			base.setDate(base.getDate() + offset * 7);
+			return { start: base, end: getWeekEnd(base) };
 		}
 		case 'month': {
-			return { start: getMonthStart(now), end: getMonthEnd(now) };
+			const base = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+			return { start: getMonthStart(base), end: getMonthEnd(base) };
 		}
 		case 'all':
 			return { start: new Date(0), end: now };
 	}
+}
+
+export function getPeriodLabel(period: StatsPeriod, offset: number): string {
+	const now = new Date();
+	if (period === 'week') {
+		const base = getWeekStart(now);
+		base.setDate(base.getDate() + offset * 7);
+		const end = getWeekEnd(base);
+		const fmt = (d: Date) => `${d.getDate()}.${d.getMonth() + 1}.`;
+		return `${fmt(base)} – ${fmt(end)}`;
+	}
+	if (period === 'month') {
+		const base = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+		return `${MONTH_LABELS_SHORT[base.getMonth()]} ${base.getFullYear()}`;
+	}
+	return 'Gesamt';
 }
 
 // --- Volume helpers ---
@@ -169,10 +187,12 @@ function calculateVolumeTrend(
 	period: StatsPeriod,
 	sessions: WorkoutSession[],
 	exercisesBySession: Map<string, ExerciseSession[]>,
-	setsByExerciseSession: Map<string, ExerciseSet[]>
+	setsByExerciseSession: Map<string, ExerciseSet[]>,
+	periodStart: Date,
+	periodEnd: Date
 ): VolumeTrendPoint[] {
 	if (period === 'week') {
-		const weekStart = getWeekStart(new Date());
+		const weekStart = periodStart;
 		const points: VolumeTrendPoint[] = DAY_LABELS_SHORT.map((label) => ({ label, volume: 0 }));
 
 		for (const s of sessions) {
@@ -188,18 +208,18 @@ function calculateVolumeTrend(
 	}
 
 	if (period === 'month') {
-		const now = new Date();
-		const monthStart = getMonthStart(now);
+		const monthStart = periodStart;
+		const monthEnd = periodEnd;
 		const weekBuckets: VolumeTrendPoint[] = [];
 
 		// Create weekly buckets within the month
 		let bucketStart = getWeekStart(monthStart);
-		if (bucketStart < monthStart) bucketStart = monthStart;
+		if (bucketStart < monthStart) bucketStart = new Date(monthStart);
 
 		let weekNum = 1;
-		while (bucketStart <= getMonthEnd(now)) {
+		while (bucketStart <= monthEnd) {
 			const bucketEnd = new Date(
-				Math.min(getWeekEnd(bucketStart).getTime(), getMonthEnd(now).getTime())
+				Math.min(getWeekEnd(bucketStart).getTime(), monthEnd.getTime())
 			);
 			weekBuckets.push({ label: `KW ${weekNum}`, volume: 0 });
 
@@ -369,11 +389,11 @@ async function loadAllData() {
 	return { completedSessions, exerciseSessions, exercisesBySession, setsByExerciseSession };
 }
 
-export async function getStatisticsData(period: StatsPeriod): Promise<StatisticsData> {
+export async function getStatisticsData(period: StatsPeriod, offset: number = 0): Promise<StatisticsData> {
 	const { completedSessions, exerciseSessions, exercisesBySession, setsByExerciseSession } =
 		await loadAllData();
 
-	const { start, end } = getPeriodRange(period);
+	const { start, end } = getPeriodRange(period, offset);
 	const periodSessions = completedSessions.filter(
 		(s) => s.startedAt >= start && s.startedAt <= end
 	);
@@ -407,7 +427,9 @@ export async function getStatisticsData(period: StatsPeriod): Promise<Statistics
 		period,
 		periodSessions,
 		exercisesBySession,
-		setsByExerciseSession
+		setsByExerciseSession,
+		start,
+		end
 	);
 
 	// Muscle group distribution (period-scoped)

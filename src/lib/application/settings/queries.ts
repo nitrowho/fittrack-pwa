@@ -1,4 +1,4 @@
-import { getPlateConfig as getPlateConfigFromRepo } from '$lib/repositories/settings-repository.js';
+import { getPlateConfig as getPlateConfigFromRepo, getThemePreference as getThemeFromRepo, type ThemePreference } from '$lib/repositories/settings-repository.js';
 import type { PlateConfig } from '$lib/models/types.js';
 
 const DEFAULT_PLATE_CONFIG: PlateConfig = {
@@ -16,4 +16,8 @@ const DEFAULT_PLATE_CONFIG: PlateConfig = {
 export async function getPlateConfig(): Promise<PlateConfig> {
 	const config = await getPlateConfigFromRepo();
 	return config ?? DEFAULT_PLATE_CONFIG;
+}
+
+export async function getTheme(): Promise<ThemePreference> {
+	return getThemeFromRepo();
 }

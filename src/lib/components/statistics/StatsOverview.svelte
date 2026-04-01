@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import {
 		getStatisticsData,
+		getPeriodLabel,
 		type StatsPeriod,
 		type StatisticsData
 	} from '$lib/application/statistics/queries.js';
@@ -18,20 +19,30 @@
 	];
 
 	let activePeriod = $state<StatsPeriod>('week');
+	let periodOffset = $state(0);
 	let stats = $state<StatisticsData | null>(null);
 	let loading = $state(false);
 
+	let periodLabel = $derived(getPeriodLabel(activePeriod, periodOffset));
+	let canGoForward = $derived(periodOffset < 0);
+
 	async function load() {
 		loading = true;
-		stats = await getStatisticsData(activePeriod);
+		stats = await getStatisticsData(activePeriod, periodOffset);
 		loading = false;
+	}
+
+	function switchPeriod(period: StatsPeriod) {
+		activePeriod = period;
+		periodOffset = 0;
 	}
 
 	onMount(load);
 
 	$effect(() => {
-		// Reload when period changes
+		// Reload when period or offset changes
 		activePeriod;
+		periodOffset;
 		load();
 	});
 </script>
@@ -41,7 +52,7 @@
 	<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
 		{#each periods as period}
 			<button
-				onclick={() => (activePeriod = period.value)}
+				onclick={() => switchPeriod(period.value)}
 				class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePeriod ===
 				period.value
 					? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
@@ -51,6 +62,37 @@
 			</button>
 		{/each}
 	</div>
+
+	<!-- Period navigation -->
+	{#if activePeriod !== 'all'}
+		<div class="flex items-center justify-between">
+			<button
+				onclick={() => periodOffset--}
+				class="rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
+				aria-label="Vorheriger Zeitraum"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+					<path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+				</svg>
+			</button>
+			<button
+				onclick={() => (periodOffset = 0)}
+				class="text-sm font-medium text-gray-700 dark:text-gray-300"
+			>
+				{periodLabel}
+			</button>
+			<button
+				onclick={() => periodOffset++}
+				disabled={!canGoForward}
+				class="rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800 {!canGoForward ? 'opacity-30' : ''}"
+				aria-label="Nächster Zeitraum"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+					<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+				</svg>
+			</button>
+		</div>
+	{/if}
 
 	{#if stats}
 		<!-- Summary cards -->

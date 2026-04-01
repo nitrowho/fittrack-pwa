@@ -11,7 +11,7 @@ import {
 	type ExportExerciseSession,
 	type ExportWorkoutSession
 } from '$lib/services/export.js';
-import { savePlateConfig as savePlateConfigToRepo } from '$lib/repositories/settings-repository.js';
+import { savePlateConfig as savePlateConfigToRepo, saveThemePreference as saveThemeToRepo, type ThemePreference } from '$lib/repositories/settings-repository.js';
 import type { PlateConfig } from '$lib/models/types.js';
 
 async function getCompletedExportSessions(): Promise<ExportWorkoutSession[]> {
@@ -79,4 +79,17 @@ export async function downloadJsonExport(): Promise<void> {
 
 export async function savePlateConfig(config: PlateConfig): Promise<void> {
 	await savePlateConfigToRepo(config);
+}
+
+export async function saveTheme(theme: ThemePreference): Promise<void> {
+	await saveThemeToRepo(theme);
+	applyTheme(theme);
+}
+
+export function applyTheme(theme: ThemePreference): void {
+	localStorage.setItem('fittrack-theme', theme);
+	const isDark =
+		theme === 'dark' ||
+		(theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+	document.documentElement.classList.toggle('dark', isDark);
 }

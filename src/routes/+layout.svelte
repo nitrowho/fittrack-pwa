@@ -4,11 +4,26 @@
 	import { pwaInfo } from 'virtual:pwa-info';
 	import { onMount } from 'svelte';
 	import { appStore } from '$lib/stores/app.svelte.js';
+	import { getTheme } from '$lib/application/settings/queries.js';
+	import { applyTheme } from '$lib/application/settings/commands.js';
 
 	let { children } = $props();
 
-	onMount(async () => {
-		await appStore.initialize();
+	onMount(() => {
+		appStore.initialize().then(async () => {
+			const theme = await getTheme();
+			applyTheme(theme);
+		});
+
+		const mql = window.matchMedia('(prefers-color-scheme: dark)');
+		function onSystemChange() {
+			const current = localStorage.getItem('fittrack-theme') || 'system';
+			if (current === 'system') {
+				document.documentElement.classList.toggle('dark', mql.matches);
+			}
+		}
+		mql.addEventListener('change', onSystemChange);
+		return () => mql.removeEventListener('change', onSystemChange);
 	});
 </script>
 
