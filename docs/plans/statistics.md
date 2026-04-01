@@ -6,14 +6,14 @@ The app collects detailed workout data (sessions, exercises, sets, weights, reps
 
 ## Success Criteria
 
-- [ ] History tab becomes a combined "Verlauf & Statistiken" view with a segmented control to switch between history (calendar + session list) and statistics
-- [ ] Statistics view shows: workouts this period, total volume, training streak, muscle group distribution, personal records, estimated 1RM, average workout duration, and a volume trend chart
-- [ ] Dashboard shows a compact weekly summary card (workouts count, total volume, streak)
-- [ ] Time period toggle (Woche / Monat / Gesamt) controls all statistics
-- [ ] Charts render via Chart.js (volume trend line chart, muscle group doughnut chart)
-- [ ] All text is German, all numbers use German locale formatting
-- [ ] Architecture follows layered pattern: components → queries → repositories → db
-- [ ] App builds and type-checks cleanly (`pnpm run check`)
+- [x] History tab becomes a combined "Verlauf & Statistiken" view with a segmented control to switch between history (calendar + session list) and statistics
+- [x] Statistics view shows: workouts this period, total volume, training streak, muscle group distribution, personal records, estimated 1RM, average workout duration, and a volume trend chart
+- [x] Dashboard shows a compact weekly summary card (workouts count, total volume, streak)
+- [x] Time period toggle (Woche / Monat / Gesamt) controls all statistics
+- [x] Charts render via Chart.js (volume trend line chart, muscle group doughnut chart)
+- [x] All text is German, all numbers use German locale formatting
+- [x] Architecture follows layered pattern: components → queries → repositories → db
+- [x] App builds and type-checks cleanly (`pnpm run check`)
 
 ## Affected Areas
 
@@ -66,30 +66,30 @@ All computations happen in `queries.ts` — pure functions that take arrays of s
 ## Tasks
 
 ### Phase 1: Statistics Query Layer
-- [ ] Install `chart.js` — `pnpm add chart.js`
-- [ ] Create `src/lib/application/statistics/queries.ts` with:
+- [x] Install `chart.js` — `pnpm add chart.js`
+- [x] Create `src/lib/application/statistics/queries.ts` with:
   - `getStatisticsData(period: 'week' | 'month' | 'all')` — main entry point returning all stats
   - `getDashboardStats()` — lightweight version returning only weekly summary (3 numbers)
   - Internal helpers: `calculateTotalVolume()`, `calculateMuscleGroupDistribution()`, `calculatePersonalRecords()`, `calculateEstimated1RM()`, `calculateTrainingStreak()`, `calculateVolumeTrend()`, `calculateAverageDuration()`
-- [ ] Add `formatCompactVolume()` to `src/lib/services/formatter.ts`
+- [x] Add `formatCompactVolume()` to `src/lib/services/formatter.ts`
 
 ### Phase 2: Dashboard Stats Card
-- [ ] Create `src/lib/components/DashboardStatsCard.svelte` — compact 3-stat horizontal card
-- [ ] Integrate into `src/routes/+page.svelte` — between logo and "Workout starten", call `getDashboardStats()` on mount
-- [ ] Update `src/lib/application/dashboard/queries.ts` to include dashboard stats in `getDashboardData()` return type
+- [x] Create `src/lib/components/DashboardStatsCard.svelte` — compact 3-stat horizontal card
+- [x] Integrate into `src/routes/+page.svelte` — between logo and "Workout starten", call `getDashboardStats()` on mount
+- [x] Update `src/lib/application/dashboard/queries.ts` to include dashboard stats in `getDashboardData()` return type
 
 ### Phase 3: Statistics View Components
-- [ ] Create `src/lib/components/statistics/StatCard.svelte` — reusable card showing label, value, optional delta/trend indicator
-- [ ] Create `src/lib/components/statistics/VolumeChart.svelte` — Chart.js line chart (volume per week/day depending on period)
-- [ ] Create `src/lib/components/statistics/MuscleGroupChart.svelte` — Chart.js doughnut chart with muscle group colors from `MUSCLE_GROUP_COLORS`
-- [ ] Create `src/lib/components/statistics/PersonalRecords.svelte` — list of exercises with best weight and estimated 1RM
-- [ ] Create `src/lib/components/statistics/StatsOverview.svelte` — composes all stat components, includes time period toggle
+- [x] Create `src/lib/components/statistics/StatCard.svelte` — reusable card showing label, value, optional delta/trend indicator
+- [x] Create `src/lib/components/statistics/VolumeChart.svelte` — Chart.js line chart (volume per week/day depending on period)
+- [x] Create `src/lib/components/statistics/MuscleGroupChart.svelte` — Chart.js doughnut chart with muscle group colors from `MUSCLE_GROUP_COLORS`
+- [x] Create `src/lib/components/statistics/PersonalRecords.svelte` — list of exercises with best weight and estimated 1RM
+- [x] Create `src/lib/components/statistics/StatsOverview.svelte` — composes all stat components, includes time period toggle
 
 ### Phase 4: History Page Integration
-- [ ] Add segmented control (Verlauf | Statistiken) to `src/routes/history/+page.svelte`
-- [ ] Conditionally render existing history content or StatsOverview based on active segment
-- [ ] Ensure calendar/edit mode only shows in Verlauf segment
-- [ ] Optionally update BottomNav icon to reflect dual purpose (e.g., combined chart+clock icon)
+- [x] Add segmented control (Verlauf | Statistiken) to `src/routes/history/+page.svelte`
+- [x] Conditionally render existing history content or StatsOverview based on active segment
+- [x] Ensure calendar/edit mode only shows in Verlauf segment
+- [x] Optionally update BottomNav icon to reflect dual purpose (e.g., combined chart+clock icon)
 
 ## Detailed Component Specs
 
