@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 	import { Chart, DoughnutController, ArcElement, Tooltip } from 'chart.js';
 	import type { MuscleGroupStat } from '$lib/application/statistics/queries.js';
 
@@ -24,8 +24,11 @@
 	let chart: Chart | null = null;
 
 	function createChart() {
-		if (chart) chart.destroy();
-		if (data.length === 0) return;
+		if (chart) {
+			chart.destroy();
+			chart = null;
+		}
+		if (!canvas || data.length === 0) return;
 
 		chart = new Chart(canvas, {
 			type: 'doughnut',
@@ -57,17 +60,17 @@
 		});
 	}
 
-	onMount(() => {
-		createChart();
-	});
-
 	onDestroy(() => {
 		chart?.destroy();
 	});
 
 	$effect(() => {
-		if (canvas && data) {
-			createChart();
+		// Track data reactively; wait for DOM update so canvas binding is current
+		const currentData = data;
+		if (currentData) {
+			tick().then(() => {
+				createChart();
+			});
 		}
 	});
 </script>
