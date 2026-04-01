@@ -43,7 +43,7 @@ fittrack-pwa/
 │   │   ├── exercises/
 │   │   │   └── +page.svelte         # Exercise catalog
 │   │   └── settings/
-│   │       └── +page.svelte         # Backup/restore, export, about
+│   │       └── +page.svelte         # Theme, plate config, backup/restore, export, about
 │   └── app.html                     # HTML shell
 ├── static/
 │   ├── manifest.webmanifest         # PWA manifest

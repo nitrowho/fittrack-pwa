@@ -38,7 +38,8 @@ interface PlateConfig {
   plates: PlateDefinition[];  // sorted descending by weight
 }
 
-// Settings table stores key-value pairs (e.g. key='plateConfig', value=PlateConfig)
+// Settings table stores key-value pairs
+// Known keys: 'plateConfig' (PlateConfig), 'theme' ('system' | 'light' | 'dark')
 interface SettingsRecord {
   key: string;
   value: unknown;

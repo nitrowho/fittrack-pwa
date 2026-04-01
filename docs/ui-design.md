@@ -9,7 +9,7 @@
 
 ## Visual Design
 
-- **Dark mode support**: Respect `prefers-color-scheme`, default to system preference
+- **Dark mode support**: User-selectable theme (System / Hell / Dunkel) via Settings → Design. Uses class-based Tailwind dark mode (`.dark` on `<html>`). An inline script in `app.html` reads the preference from `localStorage` before first paint to prevent flash. When set to "System", listens for OS `prefers-color-scheme` changes in real time.
 - **Color palette**:
   - Muscle groups: Blue (Rücken), Green (Beine), Red (Brust), Orange (Arme), Purple (Schulter)
   - Positive delta: Green

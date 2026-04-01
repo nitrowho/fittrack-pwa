@@ -5,9 +5,11 @@
 		downloadCsvExport,
 		downloadJsonExport,
 		restoreBackupFile,
-		savePlateConfig
+		savePlateConfig,
+		saveTheme
 	} from '$lib/application/settings/commands.js';
-	import { getPlateConfig } from '$lib/application/settings/queries.js';
+	import { getPlateConfig, getTheme } from '$lib/application/settings/queries.js';
+	import type { ThemePreference } from '$lib/repositories/settings-repository.js';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { appStore } from '$lib/stores/app.svelte.js';
 	import type { PlateConfig, PlateDefinition } from '$lib/models/types.js';
@@ -24,12 +26,20 @@
 	let plateExpanded = $state(false);
 	let plateSaveMessage = $state('');
 
+	let currentTheme = $state<ThemePreference>('system');
+
 	onMount(async () => {
-		const config = await getPlateConfig();
+		const [config, theme] = await Promise.all([getPlateConfig(), getTheme()]);
 		plateBarWeight = config.barWeight;
 		plateDefs = config.plates.map((p) => ({ ...p }));
 		plateConfigLoaded = true;
+		currentTheme = theme;
 	});
+
+	async function handleThemeChange(theme: ThemePreference) {
+		currentTheme = theme;
+		await saveTheme(theme);
+	}
 
 	async function handleSavePlateConfig() {
 		const config: PlateConfig = $state.snapshot({
@@ -154,6 +164,40 @@
 			{statusMessage}
 		</div>
 	{/if}
+
+	<!-- Design -->
+	<section class="space-y-3">
+		<h2 class="text-lg font-semibold">Design</h2>
+		<div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+			<h3 class="mb-3 text-sm font-medium">Erscheinungsbild</h3>
+			<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+				<button
+					onclick={() => handleThemeChange('system')}
+					class="flex-1 rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'system'
+						? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+						: 'text-gray-500 dark:text-gray-400'}"
+				>
+					System
+				</button>
+				<button
+					onclick={() => handleThemeChange('light')}
+					class="flex-1 rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'light'
+						? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+						: 'text-gray-500 dark:text-gray-400'}"
+				>
+					Hell
+				</button>
+				<button
+					onclick={() => handleThemeChange('dark')}
+					class="flex-1 rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'dark'
+						? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+						: 'text-gray-500 dark:text-gray-400'}"
+				>
+					Dunkel
+				</button>
+			</div>
+		</div>
+	</section>
 
 	<!-- Hantelscheiben -->
 	{#if plateConfigLoaded}

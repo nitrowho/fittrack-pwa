@@ -103,6 +103,15 @@ The history tab has a segmented control to switch between **Verlauf** (history l
 - **Download**: Generate `Blob`, create download link via `URL.createObjectURL`
 - **Only completed sessions and sets** are exported
 
+## Design (Erscheinungsbild)
+
+- **Theme selection**: Three-way segmented control in Settings → Design
+  - **System**: Follows the OS `prefers-color-scheme` setting, reacts to changes in real time
+  - **Hell**: Forces light mode
+  - **Dunkel**: Forces dark mode
+- **Persistence**: Stored in both `localStorage` (for instant pre-paint application) and IndexedDB `settings` table (included in backup/restore)
+- **Flash prevention**: Inline script in `app.html` applies the `.dark` class from `localStorage` before first paint
+
 ## Hantelscheiben-Rechner (Plate Calculator)
 
 - Exercises have an optional `isBarbell` flag (default false) — set in exercise create/edit form

@@ -91,7 +91,7 @@ docs/              # Project documentation
 - `/templates/[id]` template details
 - `/templates/[id]/edit` edit template
 - `/exercises` exercise management
-- `/settings` app settings, export, backup, restore
+- `/settings` app settings (theme, plate config), export, backup, restore
 
 ## Architecture Notes
 
