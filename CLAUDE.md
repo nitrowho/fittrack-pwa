@@ -26,6 +26,10 @@ pnpm run preview          # Preview production build
 pnpm run check            # Type check (svelte-kit sync + svelte-check)
 ```
 
+### Version Bumping
+
+The app version is defined in `package.json` under the `"version"` field. To bump the version, update this single field — no other files need changing.
+
 ## Architecture
 
 ### Data Model
