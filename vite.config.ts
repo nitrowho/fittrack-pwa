@@ -1,12 +1,17 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { version } from './package.json';
 
 export default defineConfig({
 	define: {
 		__APP_VERSION__: JSON.stringify(version)
+	},
+	test: {
+		environment: 'jsdom',
+		include: ['src/**/*.{test,spec}.{ts,js}'],
+		setupFiles: ['./src/test/setup.ts']
 	},
 	preview: {
 		allowedHosts: ['.trycloudflare.com']
