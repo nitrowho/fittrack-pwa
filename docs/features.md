@@ -31,6 +31,7 @@
 - Reps input with numeric input mode
 - Complete/uncomplete toggle per set
 - Completed sets styled distinctly
+- New workout sets are prefilled from the latest completed session for the same exercise
 - Editing one incomplete set propagates weight and reps to the other incomplete sets of the same exercise
 - Previous-set hint shown below each row when prior session data exists
 

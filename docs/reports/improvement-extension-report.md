@@ -30,7 +30,7 @@ These are already defined in the data model but not yet exposed in the UI:
 
 ### 2.2 Workout Experience
 
-- [ ] **Auto-fill from last session** — Pre-populate weight/reps from previous session as default values (not just showing comparison). Reduces logging to confirm-or-adjust. *(Low | Very High)*
+- [x] **Auto-fill from last session** — Weight/reps are pre-populated from the latest completed session for the same exercise across all templates, and the previous values are also shown inline for comparison. *(Implemented)*
 - [ ] **Stepper controls (+/-)** — Increment/decrement buttons alongside weight/rep inputs. Faster than typing, especially mid-set with sweaty hands. *(Low | High)*
 - [ ] **Quick-duplicate set** — "Copy last set" button to instantly add a set with same weight/reps. *(Low | High)*
 - [ ] **Superset / dropset logging** — Group exercises together as supersets, log dropsets within a single set row. Common in intermediate+ programs. *(Medium | High)*
@@ -118,7 +118,7 @@ All of these work fully offline — no backend needed.
 
 ### Phase 1 — Quick Wins (1–2 days each)
 
-- [ ] Auto-fill weight/reps from last session
+- [x] Auto-fill weight/reps from last session
 - [ ] RIR optional input field
 - [x] Workout notes editing
 - [ ] PR detection + celebration toast
