@@ -4,10 +4,11 @@
 	import { base } from '$app/paths';
 	import { getDashboardData, type DashboardTemplate } from '$lib/application/dashboard/queries.js';
 	import { getDashboardStats, type DashboardStats } from '$lib/application/statistics/queries.js';
-	import { getAchievements, type Achievement } from '$lib/application/gamification/queries.js';
+	import { getAchievements, getProgressInsights, type Achievement, type ProgressInsight } from '$lib/application/gamification/queries.js';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import AchievementsCard from '$lib/components/AchievementsCard.svelte';
+	import ProgressInsights from '$lib/components/ProgressInsights.svelte';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { formatShortDate, formatDuration } from '$lib/services/formatter.js';
 	import DashboardStatsCard from '$lib/components/DashboardStatsCard.svelte';
@@ -19,6 +20,7 @@
 	let lastCompletedTemplateId = $state<string | null>(null);
 	let dashboardStats = $state<DashboardStats | null>(null);
 	let achievements = $state<Achievement[]>([]);
+	let progressInsights = $state<ProgressInsight[]>([]);
 	let loading = $state(true);
 	let loadError = $state<string | null>(null);
 
@@ -31,10 +33,11 @@
 		loadError = null;
 
 		try {
-			const [dashboard, stats, achievementData] = await Promise.all([
+			const [dashboard, stats, achievementData, insightData] = await Promise.all([
 				getDashboardData(),
 				getDashboardStats(),
-				getAchievements()
+				getAchievements(),
+				getProgressInsights()
 			]);
 			templates = dashboard.templates;
 			recentSessions = dashboard.recentSessions;
@@ -42,6 +45,7 @@
 			lastCompletedTemplateId = dashboard.lastCompletedTemplateId;
 			dashboardStats = stats;
 			achievements = achievementData;
+			progressInsights = insightData;
 		} catch (error) {
 			loadError =
 				error instanceof Error ? error.message : 'Das Dashboard konnte nicht geladen werden.';
@@ -170,6 +174,9 @@
 				</div>
 			{/if}
 		</section>
+
+		<!-- Progress insights -->
+		<ProgressInsights insights={progressInsights} />
 
 		<!-- Achievements -->
 		{#if achievements.length > 0}

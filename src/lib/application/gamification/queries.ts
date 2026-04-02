@@ -1,11 +1,13 @@
 import { evaluateAchievements, type Achievement } from '$lib/domain/gamification/achievements.js';
+import { generateProgressInsights, type ProgressInsight } from '$lib/domain/gamification/progress-insights.js';
 import {
 	listWorkoutSessions,
 	listAllExerciseSessions,
 	listAllExerciseSets
 } from '$lib/repositories/workout-repository.js';
+import type { ExerciseSet } from '$lib/models/types.js';
 
-export type { Achievement };
+export type { Achievement, ProgressInsight };
 
 export async function getAchievements(): Promise<Achievement[]> {
 	const [sessions, exerciseSessions, allSets] = await Promise.all([
@@ -28,6 +30,27 @@ export async function getAchievements(): Promise<Achievement[]> {
 		currentStreak,
 		bestStreak
 	});
+}
+
+export async function getProgressInsights(): Promise<ProgressInsight[]> {
+	const [sessions, exerciseSessions, allSets] = await Promise.all([
+		listWorkoutSessions(),
+		listAllExerciseSessions(),
+		listAllExerciseSets()
+	]);
+
+	const completedSessions = sessions
+		.filter((s) => s.completedAt !== null)
+		.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+
+	const setsByExerciseSession = new Map<string, ExerciseSet[]>();
+	for (const set of allSets) {
+		const list = setsByExerciseSession.get(set.exerciseSessionId) ?? [];
+		list.push(set);
+		setsByExerciseSession.set(set.exerciseSessionId, list);
+	}
+
+	return generateProgressInsights(completedSessions, exerciseSessions, setsByExerciseSession);
 }
 
 function getWeekStart(date: Date): Date {
