@@ -14,6 +14,9 @@
 	import PlateCalculatorSheet from '$lib/components/PlateCalculatorSheet.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
+	import PRCelebration from '$lib/components/PRCelebration.svelte';
+	import { checkForPRs } from '$lib/application/workouts/pr-detection.js';
+	import type { DetectedPR } from '$lib/domain/workouts/personal-records.js';
 	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
 	import type { Exercise, ExerciseSet, PlateConfig } from '$lib/models/types.js';
 
@@ -28,6 +31,8 @@
 	let plateCalcWeight = $state(0);
 	let loading = $state(true);
 	let loadError = $state<string | null>(null);
+	let activePRs = $state<DetectedPR[]>([]);
+	let prExerciseName = $state('');
 
 	onMount(() => {
 		void loadWorkout();
@@ -82,6 +87,22 @@
 
 	async function handleComplete(setId: string, weight: number, reps: number) {
 		await workoutStore.completeSet(setId, weight, reps);
+
+		// Check for PRs in the background — find the exercise for this set
+		const exerciseSession = workoutStore.exerciseSessions.find((es) => {
+			const sets = workoutStore.sets.get(es.id) ?? [];
+			return sets.some((s) => s.id === setId);
+		});
+		if (exerciseSession) {
+			const currentSetIds = new Set(
+				Array.from(workoutStore.sets.values()).flatMap((sets) => sets.map((s) => s.id))
+			);
+			const prs = await checkForPRs(exerciseSession.exerciseId, weight, reps, currentSetIds);
+			if (prs.length > 0) {
+				prExerciseName = exerciseSession.exerciseName;
+				activePRs = prs;
+			}
+		}
 	}
 
 	async function handleUncomplete(setId: string) {
@@ -289,6 +310,12 @@
 		targetWeight={plateCalcWeight}
 		{plateConfig}
 		onclose={() => (showPlateCalc = false)}
+	/>
+
+	<PRCelebration
+		prs={activePRs}
+		exerciseName={prExerciseName}
+		ondismiss={() => (activePRs = [])}
 	/>
 {/if}
 	</ErrorBoundary>
