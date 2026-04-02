@@ -10,7 +10,8 @@
 - Weekly stats card with current streak and best streak record, linking directly to the statistics tab in history
 - Streak-at-risk warning when the user has an active streak but no workouts yet this week
 - Progress insight cards showing e1RM improvements per exercise (last 4 weeks vs. prior period)
-- Achievement/badge cards with progress bars (14 badges covering workout count, volume, streak, and weight milestones)
+- Compact achievement shelf on the dashboard showing earned badges and next-up progress, linking to a dedicated `/achievements` page
+- Full achievement page with all 14 badges (workout count, volume, streak, and weight milestones), progress bars, and earned status
 
 ## Active Workout
 

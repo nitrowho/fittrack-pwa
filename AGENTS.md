@@ -46,7 +46,7 @@ Six IndexedDB tables via Dexie: `exercises`, `workoutTemplates`, `templateExerci
 
 ### Routing
 
-SvelteKit file-based routing: `/` (home/dashboard), `/workout/[id]`, `/history`, `/history/[id]`, `/templates`, `/templates/new`, `/templates/[id]`, `/templates/[id]/edit`, `/exercises`, `/settings`.
+SvelteKit file-based routing: `/` (home/dashboard), `/workout/[id]`, `/history`, `/history/[id]`, `/templates`, `/templates/new`, `/templates/[id]`, `/templates/[id]/edit`, `/exercises`, `/settings`, `/achievements`.
 
 ### Number Formatting
 

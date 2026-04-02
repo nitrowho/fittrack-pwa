@@ -7,7 +7,7 @@
 	import { getGamificationData, type Achievement, type ProgressInsight } from '$lib/application/gamification/queries.js';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
-	import AchievementsCard from '$lib/components/AchievementsCard.svelte';
+	import AchievementShelf from '$lib/components/AchievementShelf.svelte';
 	import ProgressInsights from '$lib/components/ProgressInsights.svelte';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { formatShortDate, formatDuration } from '$lib/services/formatter.js';
@@ -174,14 +174,6 @@
 			{/if}
 		</section>
 
-		<!-- Progress insights -->
-		<ProgressInsights insights={progressInsights} />
-
-		<!-- Achievements -->
-		{#if achievements.length > 0}
-			<AchievementsCard {achievements} />
-		{/if}
-
 		<!-- Recent sessions -->
 		<section>
 			<h2 class="mb-3 text-lg font-semibold">Letzte Einheiten</h2>
@@ -212,5 +204,13 @@
 			</div>
 			{/if}
 		</section>
+
+		<!-- Progress insights -->
+		<ProgressInsights insights={progressInsights} />
+
+		<!-- Achievements -->
+		{#if achievements.length > 0}
+			<AchievementShelf {achievements} />
+		{/if}
 	</ErrorBoundary>
 </div>

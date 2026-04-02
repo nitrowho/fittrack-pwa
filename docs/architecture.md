@@ -126,7 +126,8 @@ Repositories hide Dexie table access:
 
 | Route | Purpose |
 |------|---------|
-| `/` | Dashboard with quick start, resume card, recent sessions, weekly stats card |
+| `/` | Dashboard with quick start, resume card, recent sessions, progress insights, achievement shelf, weekly stats card |
+| `/achievements` | Full achievement list (no bottom-nav entry) |
 | `/workout/[id]` | Active workout session |
 | `/history` | History list, calendar, and statistics tab |
 | `/history/[id]` | Session detail |
