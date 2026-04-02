@@ -63,6 +63,7 @@ export interface DashboardStats {
 	workoutsThisWeek: number;
 	volumeThisWeek: number;
 	currentStreak: number;
+	bestStreak: number;
 }
 
 interface StatisticsCollection {
@@ -593,7 +594,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 		await listCompletedWorkoutSessionsByStartedAtRange(weekStart, weekEnd)
 	);
 	const { exercisesBySession, setsByExerciseSession } = await loadCollectionForSessions(weekSessions);
-	const { current: currentStreak } = calculateStreaks(sortCompletedSessions(await listWorkoutSessions()));
+	const { current: currentStreak, best: bestStreak } = calculateStreaks(sortCompletedSessions(await listWorkoutSessions()));
 
 	return {
 		workoutsThisWeek: weekSessions.length,
@@ -602,6 +603,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 				volume + sessionVolume(session.id, exercisesBySession, setsByExerciseSession),
 			0
 		),
-		currentStreak
+		currentStreak,
+		bestStreak
 	};
 }
