@@ -1,4 +1,6 @@
 import type { ExerciseSession, ExerciseSet, MuscleGroup, WorkoutSession } from '$lib/models/types.js';
+import { getWeekStart, getWeekEnd } from '$lib/domain/shared/date-helpers.js';
+import { completedVolume } from '$lib/domain/shared/formulas.js';
 
 export interface Achievement {
 	id: string;
@@ -27,9 +29,74 @@ interface AchievementDef {
 	evaluate: (input: AchievementInput) => { earned: boolean; earnedAt: Date | null; progress: number; progressLabel: string };
 }
 
-function totalCompletedVolume(sets: ExerciseSet[]): number {
-	return sets.reduce((vol, s) => (s.isCompleted ? vol + s.weight * s.reps : vol), 0);
+// --- Factory helpers for common achievement patterns ---
+
+function workoutCountAchievement(
+	id: string, icon: string, name: string, description: string, threshold: number
+): AchievementDef {
+	return {
+		id, icon, name, description,
+		evaluate: ({ completedSessions }) => {
+			const count = completedSessions.length;
+			return {
+				earned: count >= threshold,
+				earnedAt: count >= threshold ? completedSessions[completedSessions.length - threshold]?.completedAt ?? null : null,
+				progress: Math.min(1, count / threshold),
+				progressLabel: `${Math.min(count, threshold)}/${threshold}`
+			};
+		}
+	};
 }
+
+function volumeAchievement(
+	id: string, icon: string, name: string, description: string, threshold: number
+): AchievementDef {
+	return {
+		id, icon, name, description,
+		evaluate: ({ allSets }) => {
+			const vol = completedVolume(allSets);
+			return {
+				earned: vol >= threshold,
+				earnedAt: null,
+				progress: Math.min(1, vol / threshold),
+				progressLabel: `${Math.round(vol).toLocaleString('de-DE')}/${threshold.toLocaleString('de-DE')} kg`
+			};
+		}
+	};
+}
+
+function streakAchievement(
+	id: string, icon: string, name: string, description: string, threshold: number
+): AchievementDef {
+	return {
+		id, icon, name, description,
+		evaluate: ({ bestStreak }) => ({
+			earned: bestStreak >= threshold,
+			earnedAt: null,
+			progress: Math.min(1, bestStreak / threshold),
+			progressLabel: `${Math.min(bestStreak, threshold)}/${threshold} Wochen`
+		})
+	};
+}
+
+function maxWeightAchievement(
+	id: string, icon: string, name: string, description: string, threshold: number
+): AchievementDef {
+	return {
+		id, icon, name, description,
+		evaluate: ({ allSets }) => {
+			const best = allSets.reduce((max, s) => (s.isCompleted && s.weight > max ? s.weight : max), 0);
+			return {
+				earned: best >= threshold,
+				earnedAt: null,
+				progress: Math.min(1, best / threshold),
+				progressLabel: `${Math.round(best)}/${threshold} kg`
+			};
+		}
+	};
+}
+
+// --- One-off achievements ---
 
 function uniqueMuscleGroupsInWeek(
 	sessions: WorkoutSession[],
@@ -51,134 +118,14 @@ function uniqueMuscleGroupsInWeek(
 	return groups;
 }
 
-function getWeekStart(date: Date): Date {
-	const d = new Date(date);
-	const day = d.getDay();
-	const diff = day === 0 ? 6 : day - 1;
-	d.setDate(d.getDate() - diff);
-	d.setHours(0, 0, 0, 0);
-	return d;
-}
-
-function getWeekEnd(weekStart: Date): Date {
-	const d = new Date(weekStart);
-	d.setDate(d.getDate() + 6);
-	d.setHours(23, 59, 59, 999);
-	return d;
-}
-
 const ACHIEVEMENT_DEFS: AchievementDef[] = [
-	{
-		id: 'first_workout',
-		icon: '💪',
-		name: 'Erster Schritt',
-		description: 'Schließe dein erstes Workout ab',
-		evaluate: ({ completedSessions }) => {
-			const earned = completedSessions.length >= 1;
-			return {
-				earned,
-				earnedAt: earned ? completedSessions[completedSessions.length - 1].completedAt : null,
-				progress: Math.min(1, completedSessions.length),
-				progressLabel: `${Math.min(1, completedSessions.length)}/1`
-			};
-		}
-	},
-	{
-		id: '10_workouts',
-		icon: '🏋️',
-		name: 'Regelmäßig',
-		description: 'Schließe 10 Workouts ab',
-		evaluate: ({ completedSessions }) => {
-			const count = completedSessions.length;
-			const earned = count >= 10;
-			return {
-				earned,
-				earnedAt: earned ? completedSessions[completedSessions.length - 10]?.completedAt ?? null : null,
-				progress: Math.min(1, count / 10),
-				progressLabel: `${Math.min(count, 10)}/10`
-			};
-		}
-	},
-	{
-		id: '50_workouts',
-		icon: '🔥',
-		name: 'Feuer und Flamme',
-		description: 'Schließe 50 Workouts ab',
-		evaluate: ({ completedSessions }) => {
-			const count = completedSessions.length;
-			const earned = count >= 50;
-			return {
-				earned,
-				earnedAt: earned ? completedSessions[completedSessions.length - 50]?.completedAt ?? null : null,
-				progress: Math.min(1, count / 50),
-				progressLabel: `${Math.min(count, 50)}/50`
-			};
-		}
-	},
-	{
-		id: '100_workouts',
-		icon: '🏆',
-		name: 'Centurion',
-		description: 'Schließe 100 Workouts ab',
-		evaluate: ({ completedSessions }) => {
-			const count = completedSessions.length;
-			const earned = count >= 100;
-			return {
-				earned,
-				earnedAt: earned ? completedSessions[completedSessions.length - 100]?.completedAt ?? null : null,
-				progress: Math.min(1, count / 100),
-				progressLabel: `${Math.min(count, 100)}/100`
-			};
-		}
-	},
-	{
-		id: 'volume_10k',
-		icon: '📦',
-		name: '10 Tonnen',
-		description: 'Bewege insgesamt 10.000 kg',
-		evaluate: ({ allSets }) => {
-			const vol = totalCompletedVolume(allSets);
-			const earned = vol >= 10_000;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, vol / 10_000),
-				progressLabel: `${Math.round(vol).toLocaleString('de-DE')}/${(10_000).toLocaleString('de-DE')} kg`
-			};
-		}
-	},
-	{
-		id: 'volume_100k',
-		icon: '🚛',
-		name: '100 Tonnen',
-		description: 'Bewege insgesamt 100.000 kg',
-		evaluate: ({ allSets }) => {
-			const vol = totalCompletedVolume(allSets);
-			const earned = vol >= 100_000;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, vol / 100_000),
-				progressLabel: `${Math.round(vol).toLocaleString('de-DE')}/${(100_000).toLocaleString('de-DE')} kg`
-			};
-		}
-	},
-	{
-		id: 'volume_1m',
-		icon: '🏗️',
-		name: 'Mega-Mover',
-		description: 'Bewege insgesamt 1.000.000 kg',
-		evaluate: ({ allSets }) => {
-			const vol = totalCompletedVolume(allSets);
-			const earned = vol >= 1_000_000;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, vol / 1_000_000),
-				progressLabel: `${Math.round(vol).toLocaleString('de-DE')}/${(1_000_000).toLocaleString('de-DE')} kg`
-			};
-		}
-	},
+	workoutCountAchievement('first_workout', '💪', 'Erster Schritt', 'Schließe dein erstes Workout ab', 1),
+	workoutCountAchievement('10_workouts', '🏋️', 'Regelmäßig', 'Schließe 10 Workouts ab', 10),
+	workoutCountAchievement('50_workouts', '🔥', 'Feuer und Flamme', 'Schließe 50 Workouts ab', 50),
+	workoutCountAchievement('100_workouts', '🏆', 'Centurion', 'Schließe 100 Workouts ab', 100),
+	volumeAchievement('volume_10k', '📦', '10 Tonnen', 'Bewege insgesamt 10.000 kg', 10_000),
+	volumeAchievement('volume_100k', '🚛', '100 Tonnen', 'Bewege insgesamt 100.000 kg', 100_000),
+	volumeAchievement('volume_1m', '🏗️', 'Mega-Mover', 'Bewege insgesamt 1.000.000 kg', 1_000_000),
 	{
 		id: 'all_muscles_week',
 		icon: '🎯',
@@ -198,60 +145,17 @@ const ACHIEVEMENT_DEFS: AchievementDef[] = [
 				if (groups.size > best) best = groups.size;
 				if (best >= 5) break;
 			}
-			const earned = best >= 5;
 			return {
-				earned,
+				earned: best >= 5,
 				earnedAt: null,
 				progress: Math.min(1, best / 5),
 				progressLabel: `${best}/5 Muskelgruppen`
 			};
 		}
 	},
-	{
-		id: 'streak_4',
-		icon: '📅',
-		name: 'Monats-Serie',
-		description: 'Halte eine 4-Wochen-Serie',
-		evaluate: ({ bestStreak }) => {
-			const earned = bestStreak >= 4;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, bestStreak / 4),
-				progressLabel: `${Math.min(bestStreak, 4)}/4 Wochen`
-			};
-		}
-	},
-	{
-		id: 'streak_12',
-		icon: '⚡',
-		name: 'Quartal-Serie',
-		description: 'Halte eine 12-Wochen-Serie',
-		evaluate: ({ bestStreak }) => {
-			const earned = bestStreak >= 12;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, bestStreak / 12),
-				progressLabel: `${Math.min(bestStreak, 12)}/12 Wochen`
-			};
-		}
-	},
-	{
-		id: 'streak_26',
-		icon: '👑',
-		name: 'Halbjahres-Serie',
-		description: 'Halte eine 26-Wochen-Serie',
-		evaluate: ({ bestStreak }) => {
-			const earned = bestStreak >= 26;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, bestStreak / 26),
-				progressLabel: `${Math.min(bestStreak, 26)}/26 Wochen`
-			};
-		}
-	},
+	streakAchievement('streak_4', '📅', 'Monats-Serie', 'Halte eine 4-Wochen-Serie', 4),
+	streakAchievement('streak_12', '⚡', 'Quartal-Serie', 'Halte eine 12-Wochen-Serie', 12),
+	streakAchievement('streak_26', '👑', 'Halbjahres-Serie', 'Halte eine 26-Wochen-Serie', 26),
 	{
 		id: 'early_bird',
 		icon: '🌅',
@@ -267,38 +171,8 @@ const ACHIEVEMENT_DEFS: AchievementDef[] = [
 			};
 		}
 	},
-	{
-		id: 'bodyweight_club',
-		icon: '🎖️',
-		name: 'Bodyweight-Club',
-		description: 'Hebe 80 kg oder mehr in einem Satz',
-		evaluate: ({ allSets }) => {
-			const best = allSets.reduce((max, s) => (s.isCompleted && s.weight > max ? s.weight : max), 0);
-			const earned = best >= 80;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, best / 80),
-				progressLabel: `${Math.round(best)}/${80} kg`
-			};
-		}
-	},
-	{
-		id: 'plate_club',
-		icon: '🥇',
-		name: '100-kg-Club',
-		description: 'Hebe 100 kg oder mehr in einem Satz',
-		evaluate: ({ allSets }) => {
-			const best = allSets.reduce((max, s) => (s.isCompleted && s.weight > max ? s.weight : max), 0);
-			const earned = best >= 100;
-			return {
-				earned,
-				earnedAt: null,
-				progress: Math.min(1, best / 100),
-				progressLabel: `${Math.round(best)}/${100} kg`
-			};
-		}
-	}
+	maxWeightAchievement('bodyweight_club', '🎖️', 'Bodyweight-Club', 'Hebe 80 kg oder mehr in einem Satz', 80),
+	maxWeightAchievement('plate_club', '🥇', '100-kg-Club', 'Hebe 100 kg oder mehr in einem Satz', 100)
 ];
 
 export function evaluateAchievements(input: AchievementInput): Achievement[] {

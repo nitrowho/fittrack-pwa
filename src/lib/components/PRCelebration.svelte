@@ -10,17 +10,20 @@
 	}
 
 	let { prs, exerciseName, ondismiss }: Props = $props();
-	let confettiPieces = $state(generateConfetti());
 
-	function generateConfetti(): { x: number; delay: number; color: string; size: number }[] {
-		const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
-		return Array.from({ length: 40 }, () => ({
-			x: Math.random() * 100,
-			delay: Math.random() * 600,
-			color: colors[Math.floor(Math.random() * colors.length)],
-			size: 4 + Math.random() * 6
-		}));
-	}
+	const CONFETTI_COLORS = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+
+	// Regenerate confetti each time new PRs arrive so the animation looks fresh
+	let confettiPieces = $derived(
+		prs.length > 0
+			? Array.from({ length: 40 }, () => ({
+					x: Math.random() * 100,
+					delay: Math.random() * 600,
+					color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+					size: 4 + Math.random() * 6
+				}))
+			: []
+	);
 
 	function formatPRValue(pr: DetectedPR): string {
 		switch (pr.type) {

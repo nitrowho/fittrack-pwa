@@ -88,7 +88,6 @@
 	async function handleComplete(setId: string, weight: number, reps: number) {
 		await workoutStore.completeSet(setId, weight, reps);
 
-		// Check for PRs in the background — find the exercise for this set
 		const exerciseSession = workoutStore.exerciseSessions.find((es) => {
 			const sets = workoutStore.sets.get(es.id) ?? [];
 			return sets.some((s) => s.id === setId);

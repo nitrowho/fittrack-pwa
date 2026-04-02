@@ -9,8 +9,7 @@
 	let { achievements }: Props = $props();
 	let expanded = $state(false);
 
-	let earnedCount = $derived(achievements.filter((a) => a.earned).length);
-	let recentlyEarned = $derived(achievements.filter((a) => a.earned));
+	let earned = $derived(achievements.filter((a) => a.earned));
 	let inProgress = $derived(
 		achievements
 			.filter((a) => !a.earned && a.progress > 0)
@@ -20,8 +19,8 @@
 
 	let visibleAchievements = $derived(
 		expanded
-			? [...recentlyEarned, ...inProgress, ...locked]
-			: [...recentlyEarned.slice(0, 3), ...inProgress.slice(0, 2)]
+			? [...earned, ...inProgress, ...locked]
+			: [...earned.slice(0, 3), ...inProgress.slice(0, 2)]
 	);
 	let hasMore = $derived(achievements.length > visibleAchievements.length && !expanded);
 </script>
@@ -30,7 +29,7 @@
 	<div class="mb-3 flex items-baseline justify-between">
 		<h2 class="text-lg font-semibold">Erfolge</h2>
 		<span class="text-sm text-gray-500 dark:text-gray-400">
-			{earnedCount}/{achievements.length}
+			{earned.length}/{achievements.length}
 		</span>
 	</div>
 	<div class="space-y-2">

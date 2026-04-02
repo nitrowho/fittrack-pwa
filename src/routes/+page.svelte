@@ -4,7 +4,7 @@
 	import { base } from '$app/paths';
 	import { getDashboardData, type DashboardTemplate } from '$lib/application/dashboard/queries.js';
 	import { getDashboardStats, type DashboardStats } from '$lib/application/statistics/queries.js';
-	import { getAchievements, getProgressInsights, type Achievement, type ProgressInsight } from '$lib/application/gamification/queries.js';
+	import { getGamificationData, type Achievement, type ProgressInsight } from '$lib/application/gamification/queries.js';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import AchievementsCard from '$lib/components/AchievementsCard.svelte';
@@ -33,19 +33,18 @@
 		loadError = null;
 
 		try {
-			const [dashboard, stats, achievementData, insightData] = await Promise.all([
+			const [dashboard, stats, gamification] = await Promise.all([
 				getDashboardData(),
 				getDashboardStats(),
-				getAchievements(),
-				getProgressInsights()
+				getGamificationData()
 			]);
 			templates = dashboard.templates;
 			recentSessions = dashboard.recentSessions;
 			inProgressSession = dashboard.inProgressSession;
 			lastCompletedTemplateId = dashboard.lastCompletedTemplateId;
 			dashboardStats = stats;
-			achievements = achievementData;
-			progressInsights = insightData;
+			achievements = gamification.achievements;
+			progressInsights = gamification.progressInsights;
 		} catch (error) {
 			loadError =
 				error instanceof Error ? error.message : 'Das Dashboard konnte nicht geladen werden.';

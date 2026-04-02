@@ -1,4 +1,5 @@
 import type { ExerciseSet } from '$lib/models/types.js';
+import { estimated1RM } from '$lib/domain/shared/formulas.js';
 
 export type PRType = 'weight' | 'reps' | 'volume' | 'e1rm';
 
@@ -9,16 +10,6 @@ export interface DetectedPR {
 	previousValue: number;
 }
 
-function estimated1RM(weight: number, reps: number): number | null {
-	if (reps <= 0 || reps > 12 || weight <= 0) return null;
-	if (reps === 1) return weight;
-	return weight * (1 + reps / 30);
-}
-
-/**
- * Detect personal records by comparing a just-completed set against all
- * prior completed sets for the same exercise.
- */
 export function detectPRs(
 	completedWeight: number,
 	completedReps: number,
@@ -31,7 +22,6 @@ export function detectPRs(
 
 	const prs: DetectedPR[] = [];
 
-	// Weight PR — heaviest single set
 	const bestWeight = Math.max(...prior.map((s) => s.weight));
 	if (completedWeight > bestWeight) {
 		prs.push({
@@ -42,7 +32,6 @@ export function detectPRs(
 		});
 	}
 
-	// Rep PR at same or higher weight — most reps at this weight or heavier
 	const setsAtWeight = prior.filter((s) => s.weight >= completedWeight);
 	if (setsAtWeight.length > 0) {
 		const bestReps = Math.max(...setsAtWeight.map((s) => s.reps));
@@ -56,7 +45,6 @@ export function detectPRs(
 		}
 	}
 
-	// Volume PR — single set volume (weight * reps)
 	const currentVolume = completedWeight * completedReps;
 	const bestVolume = Math.max(...prior.map((s) => s.weight * s.reps));
 	if (currentVolume > bestVolume) {
@@ -68,7 +56,6 @@ export function detectPRs(
 		});
 	}
 
-	// e1RM PR
 	const currentE1RM = estimated1RM(completedWeight, completedReps);
 	if (currentE1RM !== null) {
 		const bestE1RM = prior.reduce((best, s) => {

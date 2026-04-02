@@ -1,4 +1,5 @@
 import type { ExerciseSession, ExerciseSet, WorkoutSession } from '$lib/models/types.js';
+import { estimated1RM } from '$lib/domain/shared/formulas.js';
 
 export interface ProgressInsight {
 	exerciseName: string;
@@ -7,16 +8,11 @@ export interface ProgressInsight {
 	percentChange: number;
 }
 
-function estimated1RM(weight: number, reps: number): number | null {
-	if (reps <= 0 || reps > 12 || weight <= 0) return null;
-	if (reps === 1) return weight;
-	return weight * (1 + reps / 30);
-}
+const RECENT_PERIOD_DAYS = 28;
+const PRIOR_PERIOD_DAYS = 84;
+const MIN_IMPROVEMENT_PERCENT = 5;
+const MAX_INSIGHTS = 3;
 
-/**
- * Generate progress insight cards by comparing the recent period (last 4 weeks)
- * against the prior period (4–12 weeks ago).
- */
 export function generateProgressInsights(
 	completedSessions: WorkoutSession[],
 	exerciseSessions: ExerciseSession[],
@@ -24,13 +20,11 @@ export function generateProgressInsights(
 ): ProgressInsight[] {
 	const now = new Date();
 	const recentCutoff = new Date(now);
-	recentCutoff.setDate(recentCutoff.getDate() - 28); // last 4 weeks
+	recentCutoff.setDate(recentCutoff.getDate() - RECENT_PERIOD_DAYS);
 	const priorCutoff = new Date(now);
-	priorCutoff.setDate(priorCutoff.getDate() - 84); // 12 weeks ago
+	priorCutoff.setDate(priorCutoff.getDate() - PRIOR_PERIOD_DAYS);
 
 	const sessionDates = new Map(completedSessions.map((s) => [s.id, s.startedAt]));
-
-	// Group exercise sessions by exerciseId with their dates
 	const byExercise = new Map<string, { name: string; recent: ExerciseSession[]; prior: ExerciseSession[] }>();
 
 	for (const es of exerciseSessions) {
@@ -49,16 +43,14 @@ export function generateProgressInsights(
 	const insights: ProgressInsight[] = [];
 
 	for (const [, group] of byExercise) {
-		// Need data in both periods to compare
 		if (group.recent.length === 0 || group.prior.length === 0) continue;
 
-		// Best e1RM in each period
 		const recentBest = bestE1RM(group.recent, setsByExerciseSession);
 		const priorBest = bestE1RM(group.prior, setsByExerciseSession);
 
 		if (recentBest !== null && priorBest !== null && priorBest > 0) {
 			const change = ((recentBest - priorBest) / priorBest) * 100;
-			if (change >= 5) {
+			if (change >= MIN_IMPROVEMENT_PERCENT) {
 				insights.push({
 					exerciseName: group.name,
 					type: 'e1rm_improvement',
@@ -69,11 +61,8 @@ export function generateProgressInsights(
 		}
 	}
 
-	// Sort by biggest improvement first
 	insights.sort((a, b) => b.percentChange - a.percentChange);
-
-	// Limit to top 3 insights
-	return insights.slice(0, 3);
+	return insights.slice(0, MAX_INSIGHTS);
 }
 
 function bestE1RM(

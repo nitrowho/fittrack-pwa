@@ -1,5 +1,8 @@
 import type { ExerciseSession, ExerciseSet, MuscleGroup, WorkoutSession } from '$lib/models/types.js';
 import { MUSCLE_GROUP_LABELS } from '$lib/models/types.js';
+import { getWeekStart, getWeekEnd } from '$lib/domain/shared/date-helpers.js';
+import { estimated1RM, completedVolume } from '$lib/domain/shared/formulas.js';
+import { calculateStreaks } from '$lib/domain/shared/streaks.js';
 import {
 	listCompletedWorkoutSessionsByStartedAtRange,
 	listExerciseSessionsByWorkoutSessionIds,
@@ -76,22 +79,6 @@ interface StatisticsCollection {
 
 // --- Date helpers ---
 
-function getWeekStart(date: Date): Date {
-	const d = new Date(date);
-	const day = d.getDay();
-	const diff = day === 0 ? 6 : day - 1; // Monday = start of week
-	d.setDate(d.getDate() - diff);
-	d.setHours(0, 0, 0, 0);
-	return d;
-}
-
-function getWeekEnd(weekStart: Date): Date {
-	const d = new Date(weekStart);
-	d.setDate(d.getDate() + 6);
-	d.setHours(23, 59, 59, 999);
-	return d;
-}
-
 function getMonthStart(date: Date): Date {
 	return new Date(date.getFullYear(), date.getMonth(), 1);
 }
@@ -135,10 +122,6 @@ export function getPeriodLabel(period: StatsPeriod, offset: number): string {
 
 // --- Volume helpers ---
 
-function completedVolume(sets: ExerciseSet[]): number {
-	return sets.reduce((vol, set) => (set.isCompleted ? vol + set.weight * set.reps : vol), 0);
-}
-
 function sessionVolume(
 	sessionId: string,
 	exercisesBySession: Map<string, ExerciseSession[]>,
@@ -150,55 +133,6 @@ function sessionVolume(
 			vol + completedVolume(setsByExerciseSession.get(exerciseSession.id) ?? []),
 		0
 	);
-}
-
-// --- 1RM (Epley) ---
-
-function estimated1RM(weight: number, reps: number): number | null {
-	if (reps <= 0 || reps > 12 || weight <= 0) return null;
-	if (reps === 1) return weight;
-	return weight * (1 + reps / 30);
-}
-
-// --- Streak calculation ---
-
-function calculateStreaks(sessions: WorkoutSession[]): { current: number; best: number } {
-	if (sessions.length === 0) return { current: 0, best: 0 };
-
-	const weekKeys = new Set<string>();
-	for (const session of sessions) {
-		if (!session.completedAt) continue;
-		const weekStart = getWeekStart(session.startedAt);
-		weekKeys.add(`${weekStart.getFullYear()}-${weekStart.getMonth()}-${weekStart.getDate()}`);
-	}
-
-	if (weekKeys.size === 0) return { current: 0, best: 0 };
-
-	const now = new Date();
-	let weekStart = getWeekStart(now);
-	let current = 0;
-	let best = 0;
-	let streak = 0;
-	let isCurrentStreak = true;
-
-	for (let index = 0; index < 200; index++) {
-		const key = `${weekStart.getFullYear()}-${weekStart.getMonth()}-${weekStart.getDate()}`;
-		if (weekKeys.has(key)) {
-			streak++;
-			if (streak > best) best = streak;
-		} else {
-			if (isCurrentStreak) {
-				current = streak;
-				isCurrentStreak = false;
-			}
-			streak = 0;
-		}
-		weekStart = new Date(weekStart);
-		weekStart.setDate(weekStart.getDate() - 7);
-	}
-
-	if (isCurrentStreak) current = streak;
-	return { current, best };
 }
 
 // --- Volume trend ---
