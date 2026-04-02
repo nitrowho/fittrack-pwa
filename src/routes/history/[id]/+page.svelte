@@ -6,6 +6,7 @@
 		getHistorySessionDetail,
 		type HistoryExerciseSessionDetail
 	} from '$lib/application/history/queries.js';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import { formatDate, formatDuration, formatVolume, formatWeight } from '$lib/services/formatter.js';
 	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
 	import type { WorkoutSession } from '$lib/models/types.js';
@@ -14,21 +15,54 @@
 	let exerciseSessions = $state<HistoryExerciseSessionDetail[]>([]);
 	let totalVolume = $state(0);
 	let duration = $state(0);
+	let loading = $state(true);
+	let loadError = $state<string | null>(null);
 
-	onMount(async () => {
-		const id = page.params.id as string;
-		const detail = await getHistorySessionDetail(id);
-		if (!detail) return;
-
-		session = detail.session;
-		exerciseSessions = detail.exerciseSessions;
-		totalVolume = detail.totalVolume;
-		duration = detail.duration;
+	onMount(() => {
+		void loadHistoryDetail();
 	});
+
+	async function loadHistoryDetail() {
+		const id = page.params.id as string;
+		loading = true;
+		loadError = null;
+
+		try {
+			const detail = await getHistorySessionDetail(id);
+			if (!detail) {
+				loadError = 'Die angeforderte Einheit wurde nicht gefunden.';
+				return;
+			}
+
+			session = detail.session;
+			exerciseSessions = detail.exerciseSessions;
+			totalVolume = detail.totalVolume;
+			duration = detail.duration;
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Die Einheit konnte nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
-{#if session}
-	<div class="space-y-4 p-4">
+<div class="p-4">
+	<ErrorBoundary
+		loading={loading}
+		error={loadError}
+		title="Einheit konnte nicht geladen werden"
+		onretry={loadHistoryDetail}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-3">
+				<div class="h-20 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-24 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+			</div>
+		{/snippet}
+
+	{#if session}
+	<div class="space-y-4">
 		<div>
 			<a href="{base}/history" class="text-sm text-blue-500">&larr; Verlauf</a>
 			<h1 class="mt-1 text-2xl font-bold">{session.templateName}</h1>
@@ -76,4 +110,6 @@
 			</div>
 		{/if}
 	</div>
-{/if}
+	{/if}
+	</ErrorBoundary>
+</div>

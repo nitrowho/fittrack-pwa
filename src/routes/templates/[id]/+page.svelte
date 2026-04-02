@@ -9,18 +9,39 @@
 	import { formatSetsReps, formatRestDuration } from '$lib/services/formatter.js';
 	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import type { WorkoutTemplate } from '$lib/models/types.js';
 
 	let template = $state<WorkoutTemplate | null>(null);
 	let templateExercises = $state<Awaited<ReturnType<typeof getTemplateDetail>>['exercises']>([]);
 	let showDeleteDialog = $state(false);
+	let loading = $state(true);
+	let loadError = $state<string | null>(null);
 
-	onMount(async () => {
-		const id = page.params.id as string;
-		const detail = await getTemplateDetail(id);
-		template = detail.template;
-		templateExercises = detail.exercises;
+	onMount(() => {
+		void loadTemplate();
 	});
+
+	async function loadTemplate() {
+		const id = page.params.id as string;
+		loading = true;
+		loadError = null;
+
+		try {
+			const detail = await getTemplateDetail(id);
+			template = detail.template;
+			templateExercises = detail.exercises;
+
+			if (!detail.template) {
+				loadError = 'Die angeforderte Vorlage wurde nicht gefunden.';
+			}
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Die Vorlage konnte nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
+	}
 
 	async function handleDelete() {
 		if (!template) return;
@@ -35,8 +56,22 @@
 	}
 </script>
 
-{#if template}
-	<div class="space-y-4 p-4">
+<div class="p-4">
+	<ErrorBoundary
+		loading={loading}
+		error={loadError}
+		title="Vorlage konnte nicht geladen werden"
+		onretry={loadTemplate}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-3">
+				<div class="h-20 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-24 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+			</div>
+		{/snippet}
+
+	{#if template}
+	<div class="space-y-4">
 		<div>
 			<a href="{base}/templates" class="text-sm text-blue-500">&larr; Vorlagen</a>
 			<h1 class="mt-1 text-2xl font-bold">{template.name}</h1>
@@ -88,4 +123,6 @@
 		onconfirm={handleDelete}
 		oncancel={() => (showDeleteDialog = false)}
 	/>
-{/if}
+	{/if}
+	</ErrorBoundary>
+</div>

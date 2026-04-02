@@ -5,6 +5,7 @@
 	import { createTemplate } from '$lib/application/templates/commands.js';
 	import { listTemplateFormExercises } from '$lib/application/templates/queries.js';
 	import type { TemplateExerciseInput } from '$lib/application/templates/types.js';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import MuscleGroupBadge from '$lib/components/MuscleGroupBadge.svelte';
 	import type { Exercise } from '$lib/models/types.js';
 
@@ -13,10 +14,26 @@
 	let selectedExercises = $state<TemplateExerciseInput[]>([]);
 	let searchQuery = $state('');
 	let showPicker = $state(false);
+	let loading = $state(true);
+	let loadError = $state<string | null>(null);
 
-	onMount(async () => {
-		exercises = await listTemplateFormExercises();
+	onMount(() => {
+		void loadFormData();
 	});
+
+	async function loadFormData() {
+		loading = true;
+		loadError = null;
+
+		try {
+			exercises = await listTemplateFormExercises();
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Die Übungen konnten nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
+	}
 
 	let filteredExercises = $derived(
 		exercises.filter(
@@ -88,12 +105,25 @@
 		<h1 class="mt-1 text-2xl font-bold">Neue Vorlage</h1>
 	</div>
 
-	<input
-		type="text"
-		bind:value={name}
-		placeholder="Name der Vorlage"
-		class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900"
-	/>
+	<ErrorBoundary
+		loading={loading}
+		error={loadError}
+		title="Vorlageneditor konnte nicht geladen werden"
+		onretry={loadFormData}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-3">
+				<div class="h-14 animate-pulse rounded-xl bg-white dark:bg-gray-900"></div>
+				<div class="h-24 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+			</div>
+		{/snippet}
+
+		<input
+			type="text"
+			bind:value={name}
+			placeholder="Name der Vorlage"
+			class="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900"
+		/>
 
 	<!-- Selected exercises -->
 	<div class="space-y-2">
@@ -197,11 +227,12 @@
 		</button>
 	{/if}
 
-	<button
-		onclick={save}
-		disabled={!name.trim() || selectedExercises.length === 0}
-		class="w-full rounded-2xl bg-blue-500 py-3 text-sm font-semibold text-white disabled:opacity-50"
-	>
-		Vorlage speichern
-	</button>
+		<button
+			onclick={save}
+			disabled={!name.trim() || selectedExercises.length === 0}
+			class="w-full rounded-2xl bg-blue-500 py-3 text-sm font-semibold text-white disabled:opacity-50"
+		>
+			Vorlage speichern
+		</button>
+	</ErrorBoundary>
 </div>

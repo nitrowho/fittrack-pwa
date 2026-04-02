@@ -6,6 +6,7 @@
 		type StatsPeriod,
 		type StatisticsData
 	} from '$lib/application/statistics/queries.js';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import { formatVolume, formatDuration } from '$lib/services/formatter.js';
 	import StatCard from './StatCard.svelte';
 	import VolumeChart from './VolumeChart.svelte';
@@ -23,14 +24,23 @@
 	let periodOffset = $state(0);
 	let stats = $state<StatisticsData | null>(null);
 	let loading = $state(false);
+	let loadError = $state<string | null>(null);
 
 	let periodLabel = $derived(getPeriodLabel(activePeriod, periodOffset));
 	let canGoForward = $derived(periodOffset < 0);
 
 	async function load() {
 		loading = true;
-		stats = await getStatisticsData(activePeriod, periodOffset);
-		loading = false;
+		loadError = null;
+
+		try {
+			stats = await getStatisticsData(activePeriod, periodOffset);
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Die Statistiken konnten nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
 	}
 
 	function switchPeriod(period: StatsPeriod) {
@@ -95,6 +105,24 @@
 		</div>
 	{/if}
 
+	<ErrorBoundary
+		loading={loading && !stats}
+		error={loadError}
+		title="Statistiken konnten nicht geladen werden"
+		onretry={load}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-3">
+				<div class="flex gap-3">
+					<div class="h-24 flex-1 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+					<div class="h-24 flex-1 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+					<div class="h-24 flex-1 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				</div>
+				<div class="h-56 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-56 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+			</div>
+		{/snippet}
+
 	{#if stats}
 		<!-- Summary cards -->
 		<div class="flex gap-3">
@@ -148,9 +176,6 @@
 
 		<!-- Personal records -->
 		<PersonalRecords records={stats.personalRecords} />
-	{:else if loading}
-		<div class="flex items-center justify-center py-12">
-			<div class="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
-		</div>
 	{/if}
+	</ErrorBoundary>
 </div>

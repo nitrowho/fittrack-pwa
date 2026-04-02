@@ -13,6 +13,7 @@
 	import ExercisePickerModal from '$lib/components/ExercisePickerModal.svelte';
 	import PlateCalculatorSheet from '$lib/components/PlateCalculatorSheet.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
 	import type { Exercise, ExerciseSet, PlateConfig } from '$lib/models/types.js';
 
@@ -25,19 +26,35 @@
 	let plateConfig = $state<PlateConfig>({ barWeight: 20, plates: [] });
 	let showPlateCalc = $state(false);
 	let plateCalcWeight = $state(0);
+	let loading = $state(true);
+	let loadError = $state<string | null>(null);
 
-	onMount(async () => {
-		const id = page.params.id as string;
-		if (!workoutStore.isActive || workoutStore.session?.id !== id) {
-			await workoutStore.resumeWorkout(id);
-		}
-		if (!workoutStore.isActive) {
-			goto(`${base}/`);
-			return;
-		}
-		showNotes = !!workoutStore.session?.notes;
-		await Promise.all([loadProgressions(), loadBarbellFlags(), loadPlateConfig()]);
+	onMount(() => {
+		void loadWorkout();
 	});
+
+	async function loadWorkout() {
+		const id = page.params.id as string;
+		loading = true;
+		loadError = null;
+
+		try {
+			if (!workoutStore.isActive || workoutStore.session?.id !== id) {
+				await workoutStore.resumeWorkout(id);
+			}
+			if (!workoutStore.isActive) {
+				goto(`${base}/`);
+				return;
+			}
+			showNotes = !!workoutStore.session?.notes;
+			await Promise.all([loadProgressions(), loadBarbellFlags(), loadPlateConfig()]);
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Das Workout konnte nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
+	}
 
 	let notesTimer: ReturnType<typeof setTimeout> | null = null;
 	function handleNotesInput(value: string) {
@@ -127,8 +144,22 @@
 	);
 </script>
 
+<div class="p-4">
+	<ErrorBoundary
+		loading={loading}
+		error={loadError}
+		title="Workout konnte nicht geladen werden"
+		onretry={loadWorkout}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-3">
+				<div class="h-24 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-48 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+			</div>
+		{/snippet}
+
 {#if workoutStore.isActive}
-	<div class="space-y-4 p-4">
+	<div class="space-y-4">
 		<!-- Session header -->
 		<div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
 			<h1 class="text-xl font-bold">{workoutStore.session?.templateName}</h1>
@@ -260,3 +291,5 @@
 		onclose={() => (showPlateCalc = false)}
 	/>
 {/if}
+	</ErrorBoundary>
+</div>

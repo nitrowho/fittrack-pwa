@@ -12,6 +12,8 @@
 	import { toDateKey } from '$lib/application/history/calendar.js';
 	import { formatShortDate, formatDuration, formatVolume } from '$lib/services/formatter.js';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import TrainingCalendar from '$lib/components/TrainingCalendar.svelte';
 	import StatsOverview from '$lib/components/statistics/StatsOverview.svelte';
 
@@ -30,6 +32,8 @@
 	let calendarMonth = $state(new Date().getMonth());
 	let trainingDays = $state<Map<string, CalendarDayData>>(new Map());
 	let selectedDate = $state<string | null>(null);
+	let loading = $state(true);
+	let loadError = $state<string | null>(null);
 
 	let displayedSessions = $derived(
 		selectedDate
@@ -40,7 +44,17 @@
 	onMount(loadData);
 
 	async function loadData() {
-		await Promise.all([loadSessions(), loadCalendar()]);
+		loading = true;
+		loadError = null;
+
+		try {
+			await Promise.all([loadSessions(), loadCalendar()]);
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Der Verlauf konnte nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
 	}
 
 	async function loadSessions() {
@@ -109,120 +123,142 @@
 		{/if}
 	</div>
 
-	<!-- Segmented control -->
-	<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
-		<button
-			onclick={() => { activeTab = 'history'; editing = false; }}
-			class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'history'
-				? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
-				: 'text-gray-500 dark:text-gray-400'}"
-		>
-			Verlauf
-		</button>
-		<button
-			onclick={() => { activeTab = 'stats'; editing = false; }}
-			class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'stats'
-				? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
-				: 'text-gray-500 dark:text-gray-400'}"
-		>
-			Statistiken
-		</button>
-	</div>
-
-	{#if activeTab === 'stats'}
-		<StatsOverview />
-	{:else}
-
-	{#if !editing}
-		<TrainingCalendar
-			year={calendarYear}
-			month={calendarMonth}
-			{trainingDays}
-			{selectedDate}
-			onselect={handleSelectDate}
-			onnavigate={handleNavigate}
-		/>
-	{/if}
-
-	{#if selectedDate}
-		<button
-			onclick={() => (selectedDate = null)}
-			class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-		>
-			Alle anzeigen
-			<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-			</svg>
-		</button>
-	{/if}
-
-	{#if sessions.length === 0}
-		<p class="text-sm text-gray-500">Noch keine Einheiten</p>
-	{:else}
-		{#if editing}
-			<div class="flex items-center justify-between text-sm">
-				<button onclick={toggleSelectAll} class="font-medium text-blue-500">
-					{selected.size === displayedSessions.length ? 'Keine auswählen' : 'Alle auswählen'}
-				</button>
-				<span class="text-gray-500">
-					{selected.size} ausgewählt
-				</span>
+	<ErrorBoundary
+		loading={loading}
+		error={loadError}
+		title="Verlauf konnte nicht geladen werden"
+		onretry={loadData}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-4">
+				<div class="h-12 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-800"></div>
+				<div class="h-72 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-24 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-24 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
 			</div>
-		{/if}
+		{/snippet}
 
-		{#if displayedSessions.length === 0 && selectedDate}
-			<p class="text-sm text-gray-500">Keine Einheiten an diesem Tag</p>
+		<!-- Segmented control -->
+		<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+			<button
+				onclick={() => { activeTab = 'history'; editing = false; }}
+				class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'history'
+					? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+					: 'text-gray-500 dark:text-gray-400'}"
+			>
+				Verlauf
+			</button>
+			<button
+				onclick={() => { activeTab = 'stats'; editing = false; }}
+				class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'stats'
+					? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
+					: 'text-gray-500 dark:text-gray-400'}"
+			>
+				Statistiken
+			</button>
+		</div>
+
+		{#if activeTab === 'stats'}
+			<StatsOverview />
 		{:else}
-			<div class="space-y-2">
-				{#each displayedSessions as item}
-					{#if editing}
-						<button
-							onclick={() => toggleSelect(item.session.id)}
-							class="flex w-full items-center gap-3 text-left"
-						>
-							<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 {selected.has(item.session.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600'}">
-								{#if selected.has(item.session.id)}
-									<svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-										<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-									</svg>
-								{/if}
-							</div>
-							<div class="flex-1 rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
-								<div class="flex items-center justify-between">
-									<h3 class="font-medium">{item.session.templateName}</h3>
-									<span class="text-xs text-gray-500">{formatShortDate(item.session.startedAt)}</span>
-								</div>
-								<div class="mt-1 flex gap-3 text-xs text-gray-500">
-									{#if item.session.completedAt}
-										<span>{formatDuration((item.session.completedAt.getTime() - item.session.startedAt.getTime()) / 1000)}</span>
-									{/if}
-									<span>{formatVolume(item.volume)}</span>
-								</div>
-							</div>
-						</button>
-					{:else}
-						<a
-							href="{base}/history/{item.session.id}"
-							class="block rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900"
-						>
-							<div class="flex items-center justify-between">
-								<h3 class="font-medium">{item.session.templateName}</h3>
-								<span class="text-xs text-gray-500">{formatShortDate(item.session.startedAt)}</span>
-							</div>
-							<div class="mt-1 flex gap-3 text-xs text-gray-500">
-								{#if item.session.completedAt}
-									<span>{formatDuration((item.session.completedAt.getTime() - item.session.startedAt.getTime()) / 1000)}</span>
-								{/if}
-								<span>{formatVolume(item.volume)}</span>
-							</div>
-						</a>
-					{/if}
-				{/each}
-			</div>
-		{/if}
-	{/if}
 
-	{/if}
+			{#if !editing}
+				<TrainingCalendar
+					year={calendarYear}
+					month={calendarMonth}
+					{trainingDays}
+					{selectedDate}
+					onselect={handleSelectDate}
+					onnavigate={handleNavigate}
+				/>
+			{/if}
+
+			{#if selectedDate}
+				<button
+					onclick={() => (selectedDate = null)}
+					class="inline-flex min-h-12 items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+				>
+					Alle anzeigen
+					<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				</button>
+			{/if}
+
+			{#if sessions.length === 0}
+				<EmptyState
+					title="Noch keine Einheiten"
+					message="Deine abgeschlossenen Workouts und Statistiken erscheinen hier."
+				/>
+			{:else}
+				{#if editing}
+					<div class="flex items-center justify-between text-sm">
+						<button onclick={toggleSelectAll} class="font-medium text-blue-500">
+							{selected.size === displayedSessions.length ? 'Keine auswählen' : 'Alle auswählen'}
+						</button>
+						<span class="text-gray-500">
+							{selected.size} ausgewählt
+						</span>
+					</div>
+				{/if}
+
+				{#if displayedSessions.length === 0 && selectedDate}
+					<EmptyState
+						title="Keine Einheiten an diesem Tag"
+						message="Wähle einen anderen Tag oder zeige wieder alle Einheiten an."
+						compact={true}
+					/>
+				{:else}
+					<div class="space-y-2">
+						{#each displayedSessions as item}
+							{#if editing}
+								<button
+									onclick={() => toggleSelect(item.session.id)}
+									class="flex w-full items-center gap-3 text-left"
+								>
+									<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 {selected.has(item.session.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600'}">
+										{#if selected.has(item.session.id)}
+											<svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+											</svg>
+										{/if}
+									</div>
+									<div class="flex-1 rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+										<div class="flex items-center justify-between">
+											<h3 class="font-medium">{item.session.templateName}</h3>
+											<span class="text-xs text-gray-500">{formatShortDate(item.session.startedAt)}</span>
+										</div>
+										<div class="mt-1 flex gap-3 text-xs text-gray-500">
+											{#if item.session.completedAt}
+												<span>{formatDuration((item.session.completedAt.getTime() - item.session.startedAt.getTime()) / 1000)}</span>
+											{/if}
+											<span>{formatVolume(item.volume)}</span>
+										</div>
+									</div>
+								</button>
+							{:else}
+								<a
+									href="{base}/history/{item.session.id}"
+									class="block rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900"
+								>
+									<div class="flex items-center justify-between">
+										<h3 class="font-medium">{item.session.templateName}</h3>
+										<span class="text-xs text-gray-500">{formatShortDate(item.session.startedAt)}</span>
+									</div>
+									<div class="mt-1 flex gap-3 text-xs text-gray-500">
+										{#if item.session.completedAt}
+											<span>{formatDuration((item.session.completedAt.getTime() - item.session.startedAt.getTime()) / 1000)}</span>
+										{/if}
+										<span>{formatVolume(item.volume)}</span>
+									</div>
+								</a>
+							{/if}
+						{/each}
+					</div>
+				{/if}
+			{/if}
+		{/if}
+	</ErrorBoundary>
 </div>
 
 {#if editing && selected.size > 0}
