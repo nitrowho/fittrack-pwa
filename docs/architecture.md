@@ -1,114 +1,160 @@
 # FitTrack PWA — Architecture
 
+## High-Level Shape
+
+FitTrack PWA is a static SvelteKit single-page application. All routes run client-side, all user data is stored locally in IndexedDB, and the service worker is only responsible for caching application assets.
+
+The current implementation follows this dependency direction:
+
+```text
+routes / components
+        |
+        v
+stores
+        |
+        v
+application commands / queries
+        |
+        v
+repositories
+        |
+        v
+db / browser adapters
+
+domain modules stay framework-free beside the application layer
+```
+
 ## Project Structure
 
+```text
+src/
+  routes/
+    +layout.svelte
+    +page.svelte
+    workout/[id]/+page.svelte
+    history/+page.svelte
+    history/[id]/+page.svelte
+    templates/+page.svelte
+    templates/new/+page.svelte
+    templates/[id]/+page.svelte
+    templates/[id]/edit/+page.svelte
+    exercises/+page.svelte
+    settings/+page.svelte
+
+  lib/
+    application/
+      app/
+      dashboard/
+      exercises/
+      history/
+      settings/
+      statistics/
+      templates/
+      workouts/
+    components/
+      statistics/
+    db/
+    domain/
+      plates/
+      shared/
+      workouts/
+    infrastructure/
+    models/
+    repositories/
+    services/
+    stores/
 ```
-fittrack-pwa/
-├── src/
-│   ├── lib/
-│   │   ├── db/
-│   │   │   ├── database.ts          # Dexie DB instance & schema
-│   │   │   ├── seed.ts              # First-launch seed data
-│   │   │   └── backup.ts            # Export/import JSON backup
-│   │   ├── models/
-│   │   │   └── types.ts             # TypeScript interfaces & enums
-│   │   ├── stores/
-│   │   │   ├── workout.svelte.ts    # Active workout state (runes)
-│   │   │   └── timer.svelte.ts      # Rest timer & session timer state
-│   │   ├── services/
-│   │   │   ├── progression.ts       # Double Progression engine
-│   │   │   ├── export.ts            # CSV/JSON data export
-│   │   │   └── formatter.ts         # German locale formatters
-│   │   └── components/
-│   │       ├── ExerciseCard.svelte
-│   │       ├── SetRow.svelte
-│   │       ├── RestTimer.svelte
-│   │       ├── MuscleGroupBadge.svelte
-│   │       ├── BottomNav.svelte
-│   │       └── ConfirmDialog.svelte
-│   ├── routes/
-│   │   ├── +layout.svelte           # Shell layout with bottom nav
-│   │   ├── +page.svelte             # Home / Dashboard
-│   │   ├── workout/
-│   │   │   └── [id]/+page.svelte    # Active workout view
-│   │   ├── history/
-│   │   │   ├── +page.svelte         # Session history list
-│   │   │   └── [id]/+page.svelte    # Session detail view
-│   │   ├── templates/
-│   │   │   ├── +page.svelte         # Template list
-│   │   │   ├── new/+page.svelte     # Create template
-│   │   │   └── [id]/
-│   │   │       ├── +page.svelte     # Template detail (read-only)
-│   │   │       └── edit/+page.svelte # Edit template
-│   │   ├── exercises/
-│   │   │   └── +page.svelte         # Exercise catalog
-│   │   └── settings/
-│   │       └── +page.svelte         # Theme, plate config, backup/restore, export, about
-│   └── app.html                     # HTML shell
-├── static/
-│   ├── manifest.webmanifest         # PWA manifest
-│   ├── icons/                       # App icons (192, 512)
-│   └── favicon.ico
-├── svelte.config.js                 # SvelteKit config (static adapter)
-├── tailwind.config.js
-├── vite.config.ts                   # PWA plugin config
-├── tsconfig.json
-└── package.json
-```
+
+## Startup Flow
+
+On app startup:
+
+1. `src/routes/+layout.svelte` imports global CSS, initializes the app store, and renders the shared shell.
+2. `appStore.initialize()` seeds the database if needed and requests persistent browser storage when supported.
+3. Theme preference is read from IndexedDB and applied to `<html>`.
+4. The bottom navigation and PWA reload prompt are mounted once initialization succeeds.
+
+`src/app.html` also applies the dark theme from `localStorage` before first paint to avoid a flash during boot.
 
 ## State Management
 
-Use **Svelte 5 runes** (`$state`, `$derived`, `$effect`) for reactive state — no external state management library needed.
+The app uses Svelte 5 runes and a small number of focused stores:
 
-### Workout Store (`workout.svelte.ts`)
+### `workout.svelte.ts`
 
-Manages the active workout session. Created when a workout starts, destroyed when it ends.
+- Holds the active `WorkoutSession`
+- Tracks current `ExerciseSession` and `ExerciseSet` state in memory
+- Starts workouts from templates or as a free workout
+- Resumes in-progress workouts
+- Applies optimistic local updates after command calls
+- Coordinates wake lock usage
+- Coordinates with the timer store
 
-```
-Responsibilities:
-- Hold current WorkoutSession + ExerciseSessions + ExerciseSets in memory
-- Complete/uncomplete sets
-- Auto-populate from last session
-- Compute volume, volume deltas, elapsed time
-- Apply progression recommendations
-- Coordinate with timer store
-- Persist changes to Dexie on each mutation
-```
+### `timer.svelte.ts`
 
-### Timer Store (`timer.svelte.ts`)
+- Manages session elapsed time
+- Manages concurrent, per-exercise rest timers
+- Stores timer state as absolute end timestamps
+- Recomputes naturally after backgrounding because remaining time is derived from `Date.now()`
+- Requests notification permission lazily when rest timers start
 
-Manages date-based rest timers and session elapsed time.
+### `app.svelte.ts`
 
-```
-Responsibilities:
-- Per-exercise rest timers (concurrent, date-based)
-- Session elapsed time
-- 1 Hz tick via setInterval (requestAnimationFrame not needed — 1s precision is fine)
-- Recalculate on page visibility change (visibilitychange event)
-- Web Notification on timer completion (where permitted)
-```
+- Handles one-time app initialization
+- Exposes storage persistence status and initialization errors
+
+## Application and Persistence Layers
+
+Feature code is organized by commands and queries:
+
+- `application/dashboard`: dashboard aggregates
+- `application/workouts`: start/resume/finish workouts and progression lookups
+- `application/templates`: template CRUD and editor data
+- `application/exercises`: exercise CRUD
+- `application/history`: history list, calendar data, session detail
+- `application/statistics`: statistics cards and chart data
+- `application/settings`: backup/export/theme/plate settings
+
+Repositories hide Dexie table access:
+
+- `template-repository.ts`
+- `exercise-repository.ts`
+- `workout-repository.ts`
+- `settings-repository.ts`
 
 ## Routing
 
-SvelteKit file-based routing. All routes are client-side (static adapter, no SSR).
+| Route | Purpose |
+|------|---------|
+| `/` | Dashboard with quick start, resume card, recent sessions, weekly stats card |
+| `/workout/[id]` | Active workout session |
+| `/history` | History list, calendar, and statistics tab |
+| `/history/[id]` | Session detail |
+| `/templates` | Template list |
+| `/templates/new` | Create template |
+| `/templates/[id]` | Template detail |
+| `/templates/[id]/edit` | Edit template |
+| `/exercises` | Exercise catalog and CRUD |
+| `/settings` | Theme, plate config, backup/restore, export, version info |
 
-| Route | View | Purpose |
-|-------|------|---------|
-| `/` | Home | Dashboard, quick-start, recent sessions |
-| `/workout/[id]` | ActiveWorkout | Live workout tracking |
-| `/history` | HistoryList | All completed sessions |
-| `/history/[id]` | SessionDetail | Detailed session view |
-| `/templates` | TemplateList | Browse/manage templates |
-| `/templates/new` | CreateTemplate | Create new template |
-| `/templates/[id]` | TemplateDetail | View template (read-only) |
-| `/templates/[id]/edit` | EditTemplate | Edit template |
-| `/exercises` | ExerciseList | Exercise catalog |
-| `/settings` | Settings | Backup/restore, data export |
+## Shared UI Shell
 
-## Offline Strategy
+- Bottom navigation has 5 tabs: Start, Verlauf, Vorlagen, Übungen, Einstellungen
+- Layout respects safe-area insets at the top and bottom
+- A reload prompt appears when a new service worker version is available
+- A one-time offline-ready toast is shown after the app becomes cache-ready
 
-**Precache** all app assets (HTML, JS, CSS, icons) via the service worker generated by `vite-plugin-pwa`. The app shell loads instantly from cache.
+## Offline and PWA Strategy
 
-**Data** lives entirely in IndexedDB — never fetched from a server. The service worker only handles asset caching.
+- Manifest and service worker are generated by `@vite-pwa/sveltekit`
+- Built assets are precached via Workbox
+- There is no runtime API caching because the app has no backend
+- The app uses `registerType: 'prompt'`, so updates are user-driven
+- Apple touch icons and iOS splash screens are declared in `src/app.html`
 
-**Visibility change handling**: When `document.visibilityState` changes to `'visible'`, recalculate all timer values from stored dates (equivalent to iOS `scenePhase == .active`).
+## Current Validation Approach
+
+- Type and Svelte validation: `pnpm run check`
+- Manual feature verification for workflows such as templates, workouts, statistics, backup/restore, and exports
+
+There is currently no automated unit or end-to-end test setup in the repository.

@@ -1,33 +1,53 @@
 # FitTrack PWA — Seed Data
 
-On first launch (empty database), seed the following:
+On first app launch, the database is seeded when the `exercises` table is empty.
 
 ## Exercises
 
-| Name | Muscle Group |
-|------|-------------|
-| Kniebeuge | Beine |
-| Bankdrücken | Brust |
-| Chin-Ups | Rücken |
-| Langhantelrudern Obergriff | Rücken |
-| Rumänisches Kreuzheben | Beine |
+| Name | Muscle Group | Is Barbell |
+|------|--------------|------------|
+| Kniebeuge | Beine | Yes |
+| Bankdrücken | Brust | Yes |
+| Chin-Ups | Rücken | No |
+| Langhantelrudern Obergriff | Rücken | Yes |
+| Rumänisches Kreuzheben | Beine | Yes |
 
 ## Templates
 
-**Workout A** (sortOrder: 0):
+### Workout A
 
-| # | Exercise | Sets × Reps | Rest |
-|---|----------|------------|------|
-| 1 | Kniebeuge | 3 × 5–8 | 4:00 |
-| 2 | Bankdrücken | 3 × 6–10 | 3:30 |
-| 3 | Chin-Ups | 3 × 6–10 | 3:15 |
-| 4 | Langhantelrudern Obergriff | 2 × 6–10 | 2:30 |
+| # | Exercise | Sets x Reps | Rest |
+|---|----------|-------------|------|
+| 1 | Kniebeuge | 3 x 5-8 | 240 s |
+| 2 | Bankdrücken | 3 x 6-10 | 210 s |
+| 3 | Chin-Ups | 3 x 6-10 | 195 s |
+| 4 | Langhantelrudern Obergriff | 2 x 6-10 | 150 s |
 
-**Workout B** (sortOrder: 1):
+### Workout B
 
-| # | Exercise | Sets × Reps | Rest |
-|---|----------|------------|------|
-| 1 | Rumänisches Kreuzheben | 3 × 6–10 | 4:00 |
-| 2 | Bankdrücken | 3 × 6–10 | 3:30 |
-| 3 | Chin-Ups | 3 × 6–10 | 3:15 |
-| 4 | Langhantelrudern Obergriff | 2 × 6–10 | 2:30 |
+| # | Exercise | Sets x Reps | Rest |
+|---|----------|-------------|------|
+| 1 | Rumänisches Kreuzheben | 3 x 6-10 | 240 s |
+| 2 | Bankdrücken | 3 x 6-10 | 210 s |
+| 3 | Chin-Ups | 3 x 6-10 | 195 s |
+| 4 | Langhantelrudern Obergriff | 2 x 6-10 | 150 s |
+
+## Seeded Settings
+
+The seed step also creates a default `plateConfig` entry in the `settings` table:
+
+```json
+{
+  "barWeight": 20,
+  "plates": [
+    { "weight": 20 },
+    { "weight": 15 },
+    { "weight": 10 },
+    { "weight": 5 },
+    { "weight": 2.5 },
+    { "weight": 1.25 }
+  ]
+}
+```
+
+The theme preference is not seeded; it defaults to `system` until the user changes it.

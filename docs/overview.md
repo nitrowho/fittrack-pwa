@@ -1,60 +1,72 @@
 # FitTrack PWA — Overview & Tech Stack
 
-## 1. Overview
+## Overview
 
-FitTrack PWA is a mobile-first Progressive Web App that replicates the full functionality of the existing FitTrack iOS app. It runs entirely in the browser, stores all data locally in IndexedDB, and can be installed on the home screen for a native-like experience — with no signing, no expiry, and no app store.
+FitTrack PWA is a mobile-first, offline-first workout tracker built as a static SvelteKit app. It mirrors the existing iOS app's core training workflow, runs entirely in the browser, and stores all user data locally in IndexedDB.
 
-### Goals
+Current product characteristics:
 
-- **Feature parity** with the iOS app (workout tracking, rest timers, progression engine, live comparison, data export)
-- **Offline-first** — works without internet, all data local
-- **Installable** — "Add to Home Screen" on iOS/Android for native feel
-- **Manual backup/restore** — JSON file export/import to prevent data loss
-- **No backend** — fully client-side, zero infrastructure
+- No backend, no user accounts, no cloud sync
+- Installable as a Progressive Web App
+- German UI copy throughout the app
+- Backup and export features for local data portability
+- Training history, statistics, theme selection, and plate calculation already shipped
 
-### Non-Goals (for now)
+## Goals
 
-- Cloud sync / multi-device sync
-- Push notifications (limited iOS PWA support)
-- User accounts / authentication
+- Track workouts fully offline
+- Preserve training history via snapshot-based session data
+- Keep the experience mobile-first and home-screen friendly
+- Support manual backup and restore without infrastructure
+- Maintain clear architectural boundaries between UI, application logic, repositories, and database code
 
----
+## Current Non-Goals
 
-## 2. Tech Stack
+- Multi-device sync
+- Authentication
+- Server-side rendering
+- A dedicated automated test suite
 
-| Layer | Technology | Rationale |
-|-------|-----------|-----------|
-| **Framework** | SvelteKit (static adapter) | Minimal boilerplate, small bundle, reactive model similar to SwiftUI's `@Observable` |
-| **Build** | Vite | Fast dev server, HMR, native ESM |
-| **PWA** | vite-plugin-pwa | Service worker generation, web manifest, offline caching |
-| **Storage** | Dexie.js (IndexedDB) | Typed IndexedDB wrapper with live queries, versioned schema migrations |
-| **Styling** | Tailwind CSS | Utility-first, mobile-first responsive design |
-| **Language** | TypeScript | Type safety across models and business logic |
-| **Notifications** | Web Notifications API | Rest timer completion alerts (where supported) |
-| **Export** | Native `Blob` + `URL.createObjectURL` | CSV/JSON file generation and download |
-| **Haptics** | `navigator.vibrate()` | Set completion feedback (Android only; no-op on iOS) |
+## Tech Stack
 
-### No Dependencies On
+| Layer | Technology | Notes |
+|------|------------|------|
+| Framework | SvelteKit 2 + Svelte 5 | Static SPA with runes |
+| Build | Vite 7 | App version injected from `package.json` |
+| Package manager | pnpm | Declared as `pnpm@10.32.1` |
+| Styling | Tailwind CSS 4 | Mobile-first utility styling |
+| Storage | Dexie 4 / IndexedDB | Versioned schema, local-first persistence |
+| Charts | Chart.js 4 | Statistics charts and estimated 1RM chart |
+| PWA | `@vite-pwa/sveltekit` | Generated manifest + service worker |
+| Language | TypeScript | Used throughout the app |
 
-- Any backend / API server
-- Any database server
-- Any authentication provider
-- Any third-party UI component library
+## Current Project Shape
 
----
+The codebase has already moved into the layered structure described in `docs/development-rules.md`:
 
-## Summary
+- `src/routes` and `src/lib/components`: UI and route composition
+- `src/lib/stores`: long-lived reactive workflow state
+- `src/lib/application`: commands and queries per feature
+- `src/lib/domain`: pure business logic such as progression and plate calculation
+- `src/lib/repositories`: persistence-facing feature methods
+- `src/lib/db`: Dexie schema, seed data, backup/restore
+- `src/lib/infrastructure`: browser API adapters such as wake lock, downloads, haptics, and storage persistence
 
-| Aspect | Decision |
-|--------|----------|
-| **Framework** | SvelteKit (static, no SSR) |
-| **State** | Svelte 5 runes ($state, $derived, $effect) |
-| **Storage** | Dexie.js (IndexedDB) |
-| **Styling** | Tailwind CSS |
-| **PWA** | vite-plugin-pwa (precache, manifest) |
-| **Timers** | Date-based (endDate - now), 1 Hz setInterval |
-| **Backup** | Full DB dump as JSON file (download/upload) |
-| **Export** | CSV (semicolon) + JSON (ISO8601), versioned |
-| **Language** | German (hardcoded, no i18n) |
-| **Hosting** | Any static host (Vercel, Netlify, etc.) |
-| **iOS migration** | One-time JSON import from iOS export |
+## Key Runtime Behavior
+
+- The app seeds starter exercises, templates, and default plate settings on first launch.
+- `WorkoutSession` and `ExerciseSession` data is snapshotted so history remains correct after templates or exercises change.
+- One in-progress workout can be resumed from the dashboard.
+- Settings include theme preference, plate configuration, backup/restore, CSV export, JSON export, and a storage persistence status banner.
+
+## Development Commands
+
+```bash
+pnpm install
+pnpm run dev
+pnpm run build
+pnpm run preview
+pnpm run check
+```
+
+`pnpm run check` is the main validation command today. There is currently no Vitest or Playwright setup in the repository.

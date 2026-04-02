@@ -2,7 +2,7 @@
 
 This document defines the coding and architecture rules for FitTrack PWA.
 
-It is based on the current repository state. Today, data access and business logic are spread across `routes/`, `stores/`, `services/`, and `db/`. That works for a small codebase, but it will become harder to maintain as features grow. The main architectural direction from now on is:
+It is based on the current repository state. The repository has already moved a large part of the app into `application/`, `repositories/`, `domain/`, and `infrastructure/`, but older code patterns still exist in places. The main architectural direction remains:
 
 - `routes/` and UI components must not access Dexie directly.
 - Business workflows must go through dedicated application methods.

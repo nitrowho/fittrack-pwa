@@ -1,48 +1,42 @@
 # FitTrack PWA — Data Model
 
-All models map directly from the iOS SwiftData schema. IDs are UUIDs (generated client-side via `crypto.randomUUID()`). All fields have defaults for forward compatibility.
+The app stores all data in IndexedDB via Dexie. IDs are generated client-side through the shared UUID helper in `src/lib/domain/shared/uuid.ts`, which uses `crypto.randomUUID()`.
 
 ## Entity Relationship Diagram
 
-```
+```text
 Exercise ←──── TemplateExercise ────→ WorkoutTemplate
                                           │
-                                          ↓ (snapshot at session creation)
+                                          ↓ snapshot at workout start
                                     WorkoutSession
                                           │
                                     ExerciseSession
                                           │
                                       ExerciseSet
+
+SettingsRecord is a separate key-value table
 ```
 
-## Dexie Schema
+## Core Types
 
 ```typescript
-// db.ts
-import Dexie, { type Table } from 'dexie';
+type MuscleGroup = 'ruecken' | 'beine' | 'brust' | 'arme' | 'schulter';
 
 interface Exercise {
-  id: string;           // UUID
+  id: string;
   name: string;
   muscleGroup: MuscleGroup | null;
-  isBarbell: boolean;   // true for barbell exercises (enables plate calculator)
+  isBarbell: boolean;
 }
 
 interface PlateDefinition {
-  weight: number;       // e.g. 20, 15, 10, 5, 2.5, 1.25
-  quantity?: number;    // total plates available (both sides); undefined = unlimited
+  weight: number;
+  quantity?: number; // undefined = unlimited
 }
 
 interface PlateConfig {
-  barWeight: number;          // default 20
-  plates: PlateDefinition[];  // sorted descending by weight
-}
-
-// Settings table stores key-value pairs
-// Known keys: 'plateConfig' (PlateConfig), 'theme' ('system' | 'light' | 'dark')
-interface SettingsRecord {
-  key: string;
-  value: unknown;
+  barWeight: number;
+  plates: PlateDefinition[];
 }
 
 interface WorkoutTemplate {
@@ -54,19 +48,19 @@ interface WorkoutTemplate {
 
 interface TemplateExercise {
   id: string;
-  templateId: string;   // FK → WorkoutTemplate
-  exerciseId: string;    // FK → Exercise
+  templateId: string;
+  exerciseId: string;
   sortOrder: number;
-  targetSets: number;    // e.g. 3
-  repRangeLower: number; // e.g. 6
-  repRangeUpper: number; // e.g. 10
-  restDurationSeconds: number; // e.g. 180
+  targetSets: number;
+  repRangeLower: number;
+  repRangeUpper: number;
+  restDurationSeconds: number;
 }
 
 interface WorkoutSession {
   id: string;
-  templateId: string;    // FK → WorkoutTemplate
-  templateName: string;  // Snapshot at creation
+  templateId: string | null; // null for free workouts
+  templateName: string;      // snapshot at creation
   startedAt: Date;
   completedAt: Date | null;
   notes: string;
@@ -74,34 +68,37 @@ interface WorkoutSession {
 
 interface ExerciseSession {
   id: string;
-  workoutSessionId: string; // FK → WorkoutSession
-  exerciseId: string;       // Reference to Exercise (not FK)
-  exerciseName: string;     // Snapshot
-  muscleGroup: MuscleGroup | null; // Snapshot
+  workoutSessionId: string;
+  exerciseId: string;
+  exerciseName: string;
+  muscleGroup: MuscleGroup | null;
   sortOrder: number;
   startedAt: Date | null;
   completedAt: Date | null;
-  targetSets: number;       // Snapshot from TemplateExercise
-  repRangeLower: number;    // Snapshot
-  repRangeUpper: number;    // Snapshot
-  restDurationSeconds: number; // Snapshot
+  targetSets: number;
+  repRangeLower: number;
+  repRangeUpper: number;
+  restDurationSeconds: number;
 }
 
 interface ExerciseSet {
   id: string;
-  exerciseSessionId: string; // FK → ExerciseSession
-  setNumber: number;         // 1-based
-  weight: number;            // kg
+  exerciseSessionId: string;
+  setNumber: number;
+  weight: number;
   reps: number;
-  rir: number | null;        // Reps In Reserve
+  rir: number | null;
   isCompleted: boolean;
   completedAt: Date | null;
 }
 
-type MuscleGroup = 'ruecken' | 'beine' | 'brust' | 'arme' | 'schulter';
+interface SettingsRecord {
+  key: string;
+  value: unknown;
+}
 ```
 
-## Dexie Indexes
+## Current Dexie Schema
 
 ```typescript
 class FitTrackDB extends Dexie {
@@ -115,31 +112,65 @@ class FitTrackDB extends Dexie {
 
   constructor() {
     super('fittrack');
+
     this.version(1).stores({
       exercises: 'id, name, muscleGroup',
       workoutTemplates: 'id, sortOrder',
       templateExercises: 'id, templateId, exerciseId, sortOrder',
       workoutSessions: 'id, templateId, startedAt, completedAt',
       exerciseSessions: 'id, workoutSessionId, exerciseId, sortOrder',
-      exerciseSets: 'id, exerciseSessionId, setNumber',
+      exerciseSets: 'id, exerciseSessionId, setNumber'
     });
-    // Version 2: added settings table, isBarbell on exercises
+
     this.version(2).stores({
-      .../* same as v1 */,
-      settings: 'key',
+      exercises: 'id, name, muscleGroup',
+      workoutTemplates: 'id, sortOrder',
+      templateExercises: 'id, templateId, exerciseId, sortOrder',
+      workoutSessions: 'id, templateId, startedAt, completedAt',
+      exerciseSessions: 'id, workoutSessionId, exerciseId, sortOrder',
+      exerciseSets: 'id, exerciseSessionId, setNumber',
+      settings: 'key'
     });
   }
 }
 ```
 
-## Cascade Deletes
+Version 2 added the `settings` table and upgrades legacy exercises by inferring `isBarbell` from exercise names when the property is missing.
 
-Dexie doesn't support cascade deletes natively. Implement them as helper functions:
+## Settings Keys in Use
 
-- **Delete WorkoutTemplate** → delete all TemplateExercises with that `templateId`
-- **Delete WorkoutSession** → delete all ExerciseSessions → delete all ExerciseSets
-- **Delete Exercise** → delete all TemplateExercises referencing it
+The `settings` table currently stores:
+
+- `plateConfig`: `PlateConfig`
+- `theme`: `'system' | 'light' | 'dark'`
 
 ## Snapshot Pattern
 
-When creating a WorkoutSession, snapshot all relevant template data into ExerciseSession fields. This ensures historical accuracy even if templates are edited later. The ExerciseSession stores `exerciseName`, `muscleGroup`, `targetSets`, `repRangeLower`, `repRangeUpper`, and `restDurationSeconds` — all copied from the TemplateExercise at session creation time.
+When a workout starts, template data is copied into session records:
+
+- `WorkoutSession.templateName`
+- `ExerciseSession.exerciseName`
+- `ExerciseSession.muscleGroup`
+- `ExerciseSession.targetSets`
+- `ExerciseSession.repRangeLower`
+- `ExerciseSession.repRangeUpper`
+- `ExerciseSession.restDurationSeconds`
+
+This keeps history stable even after templates or exercises are edited later.
+
+## Cascade Deletes
+
+Dexie does not provide relational cascade deletes, so the app handles them explicitly:
+
+- Delete template: remove linked `TemplateExercise` rows first
+- Delete exercise: remove linked `TemplateExercise` rows first
+- Delete workout session: remove `ExerciseSession` rows and their `ExerciseSet` rows
+
+These operations live below the UI in database or repository code and run inside explicit transactions.
+
+## Current Business Model Notes
+
+- Progression comparisons are per exercise across all templates
+- A workout can be template-based or free-form
+- Only completed sets contribute to exported volume and statistics
+- Session notes belong to `WorkoutSession`
