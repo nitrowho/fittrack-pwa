@@ -12,7 +12,8 @@ import {
 	finishWorkoutSession,
 	listExerciseSetsByExerciseSessionId,
 	updateExerciseSet,
-	updateExerciseSets
+	updateExerciseSets,
+	updateWorkoutSessionNotes
 } from '$lib/repositories/workout-repository.js';
 
 function createSetsFromTemplate(
@@ -259,6 +260,13 @@ export async function finishWorkout(workoutSessionId: string): Promise<void> {
 
 export async function cancelWorkout(workoutSessionId: string): Promise<void> {
 	await deleteWorkoutSession(workoutSessionId);
+}
+
+export async function updateNotes(
+	workoutSessionId: string,
+	notes: string
+): Promise<void> {
+	await updateWorkoutSessionNotes(workoutSessionId, notes);
 }
 
 export async function applyWeightIncrease(

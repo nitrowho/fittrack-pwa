@@ -98,6 +98,13 @@ export async function deleteExerciseSet(id: string): Promise<void> {
 	await db.exerciseSets.delete(id);
 }
 
+export async function updateWorkoutSessionNotes(
+	workoutSessionId: string,
+	notes: string
+): Promise<void> {
+	await db.workoutSessions.update(workoutSessionId, { notes });
+}
+
 export async function finishWorkoutSession(
 	workoutSessionId: string,
 	completedAt: Date
