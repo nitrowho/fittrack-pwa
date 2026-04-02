@@ -4,8 +4,10 @@
 	import { base } from '$app/paths';
 	import { getDashboardData, type DashboardTemplate } from '$lib/application/dashboard/queries.js';
 	import { getDashboardStats, type DashboardStats } from '$lib/application/statistics/queries.js';
+	import { getAchievements, type Achievement } from '$lib/application/gamification/queries.js';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
+	import AchievementsCard from '$lib/components/AchievementsCard.svelte';
 	import { workoutStore } from '$lib/stores/workout.svelte.js';
 	import { formatShortDate, formatDuration } from '$lib/services/formatter.js';
 	import DashboardStatsCard from '$lib/components/DashboardStatsCard.svelte';
@@ -16,6 +18,7 @@
 	let inProgressSession = $state<WorkoutSession | null>(null);
 	let lastCompletedTemplateId = $state<string | null>(null);
 	let dashboardStats = $state<DashboardStats | null>(null);
+	let achievements = $state<Achievement[]>([]);
 	let loading = $state(true);
 	let loadError = $state<string | null>(null);
 
@@ -28,12 +31,17 @@
 		loadError = null;
 
 		try {
-			const [dashboard, stats] = await Promise.all([getDashboardData(), getDashboardStats()]);
+			const [dashboard, stats, achievementData] = await Promise.all([
+				getDashboardData(),
+				getDashboardStats(),
+				getAchievements()
+			]);
 			templates = dashboard.templates;
 			recentSessions = dashboard.recentSessions;
 			inProgressSession = dashboard.inProgressSession;
 			lastCompletedTemplateId = dashboard.lastCompletedTemplateId;
 			dashboardStats = stats;
+			achievements = achievementData;
 		} catch (error) {
 			loadError =
 				error instanceof Error ? error.message : 'Das Dashboard konnte nicht geladen werden.';
@@ -152,6 +160,11 @@
 				</div>
 			{/if}
 		</section>
+
+		<!-- Achievements -->
+		{#if achievements.length > 0}
+			<AchievementsCard {achievements} />
+		{/if}
 
 		<!-- Recent sessions -->
 		<section>
