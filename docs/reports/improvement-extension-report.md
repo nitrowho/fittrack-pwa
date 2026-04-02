@@ -22,7 +22,7 @@ These are already defined in the data model but not yet exposed in the UI:
 
 ### 2.1 Progression & Training Intelligence
 
-- [ ] **Estimated 1RM tracking + chart** — Epley/Brzycki formula, line chart per exercise over time. The #1 most-requested chart among serious lifters. *(Medium | Very High)*
+- [x] **Estimated 1RM tracking + chart** — Epley/Brzycki formula, line chart per exercise over time. The #1 most-requested chart among serious lifters. *(Medium | Very High)*
 - [ ] **RPE/RIR logging** — Optional 1–10 RPE or 0–5 RIR per set. Enables autoregulation — adjust load based on daily readiness rather than fixed progression. *(Low | High)*
 - [ ] **Auto-deload recommendation** — After 3+ stagnation sessions or N weeks without deload, suggest a deload week (reduce volume 50% or intensity to 60–80%). *(Medium | High)*
 - [ ] **Weekly volume per muscle group** — Stacked bar or radar chart showing sets/week per muscle group. Helps detect imbalances and track volume landmarks (MEV/MAV/MRV). *(Medium | High)*
@@ -50,7 +50,7 @@ All of these work fully offline — no backend needed.
 
 ### 2.4 Data & Visualization
 
-- [ ] **e1RM progression chart** — Line chart showing estimated 1RM over time per exercise. Single most wanted chart. *(Medium | Very High)*
+- [x] **e1RM progression chart** — Line chart showing estimated 1RM over time per exercise. Single most wanted chart. *(Medium | Very High)*
 - [ ] **Rep max progression** — Overlay 1RM, 3RM, 5RM, 10RM lines on same chart per exercise. *(Medium | High)*
 - [ ] **Training frequency heatmap** — Enhance existing calendar with intensity coloring (GitHub contribution style). *(Low | Medium)*
 - [ ] **Workout duration trend** — Chart showing session duration over time. *(Low | Medium)*
@@ -131,7 +131,7 @@ All of these work fully offline — no backend needed.
 
 ### Phase 2 — High-Impact Features (3–5 days each)
 
-- [ ] Estimated 1RM calculation + line chart per exercise
+- [x] Estimated 1RM calculation + line chart per exercise
 - [ ] Weekly volume per muscle group chart
 - [ ] Achievement/badge system
 - [ ] Auto-deload recommendation

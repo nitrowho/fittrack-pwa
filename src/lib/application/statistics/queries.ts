@@ -38,6 +38,19 @@ export interface StatisticsData {
 	volumeTrend: VolumeTrendPoint[];
 	muscleGroupDistribution: MuscleGroupStat[];
 	personalRecords: PersonalRecord[];
+	e1rmHistory: E1RMHistoryExercise[];
+}
+
+export interface E1RMHistoryPoint {
+	date: Date;
+	label: string;
+	estimated1RM: number;
+}
+
+export interface E1RMHistoryExercise {
+	exerciseId: string;
+	exerciseName: string;
+	history: E1RMHistoryPoint[];
 }
 
 export interface DashboardStats {
@@ -359,6 +372,74 @@ function calculatePersonalRecords(
 		.sort((a, b) => (b.bestEstimated1RM ?? 0) - (a.bestEstimated1RM ?? 0));
 }
 
+// --- e1RM history ---
+
+const SHORT_DATE_FORMAT = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short' });
+
+function calculateE1RMHistory(
+	completedSessions: WorkoutSession[],
+	exerciseSessions: ExerciseSession[],
+	setsByExerciseSession: Map<string, ExerciseSet[]>
+): E1RMHistoryExercise[] {
+	// Group exercise sessions by exerciseId
+	const byExercise = new Map<string, { exerciseName: string; entries: { date: Date; sessionId: string; esId: string }[] }>();
+
+	for (const es of exerciseSessions) {
+		const session = completedSessions.find((s) => s.id === es.workoutSessionId);
+		if (!session) continue;
+
+		let group = byExercise.get(es.exerciseId);
+		if (!group) {
+			group = { exerciseName: es.exerciseName, entries: [] };
+			byExercise.set(es.exerciseId, group);
+		}
+		group.entries.push({ date: session.startedAt, sessionId: session.id, esId: es.id });
+	}
+
+	const results: E1RMHistoryExercise[] = [];
+
+	for (const [exerciseId, group] of byExercise) {
+		// Sort entries by date
+		group.entries.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+		const history: E1RMHistoryPoint[] = [];
+
+		for (const entry of group.entries) {
+			const sets = setsByExerciseSession.get(entry.esId) ?? [];
+			let best1RM: number | null = null;
+
+			for (const set of sets) {
+				if (!set.isCompleted || set.weight <= 0) continue;
+				const e1rm = estimated1RM(set.weight, set.reps);
+				if (e1rm !== null && (best1RM === null || e1rm > best1RM)) {
+					best1RM = e1rm;
+				}
+			}
+
+			if (best1RM !== null) {
+				history.push({
+					date: entry.date,
+					label: SHORT_DATE_FORMAT.format(entry.date),
+					estimated1RM: Math.round(best1RM * 10) / 10
+				});
+			}
+		}
+
+		if (history.length >= 2) {
+			results.push({ exerciseId, exerciseName: group.exerciseName, history });
+		}
+	}
+
+	// Sort by highest latest e1RM
+	results.sort((a, b) => {
+		const aLast = a.history[a.history.length - 1].estimated1RM;
+		const bLast = b.history[b.history.length - 1].estimated1RM;
+		return bLast - aLast;
+	});
+
+	return results;
+}
+
 // --- Main queries ---
 
 async function loadAllData() {
@@ -441,6 +522,9 @@ export async function getStatisticsData(period: StatsPeriod, offset: number = 0)
 	// Personal records (always all-time)
 	const personalRecords = calculatePersonalRecords(exerciseSessions, setsByExerciseSession);
 
+	// e1RM history (always all-time)
+	const e1rmHistory = calculateE1RMHistory(completedSessions, exerciseSessions, setsByExerciseSession);
+
 	return {
 		workoutCount,
 		totalVolume,
@@ -449,7 +533,8 @@ export async function getStatisticsData(period: StatsPeriod, offset: number = 0)
 		bestStreak,
 		volumeTrend,
 		muscleGroupDistribution,
-		personalRecords
+		personalRecords,
+		e1rmHistory
 	};
 }
 

@@ -11,6 +11,7 @@
 	import VolumeChart from './VolumeChart.svelte';
 	import MuscleGroupChart from './MuscleGroupChart.svelte';
 	import PersonalRecords from './PersonalRecords.svelte';
+	import E1RMChart from './E1RMChart.svelte';
 
 	const periods: { value: StatsPeriod; label: string }[] = [
 		{ value: 'week', label: 'Woche' },
@@ -138,6 +139,9 @@
 		{#if stats.volumeTrend.length > 0}
 			<VolumeChart data={stats.volumeTrend} />
 		{/if}
+
+		<!-- e1RM progression chart -->
+		<E1RMChart exercises={stats.e1rmHistory} />
 
 		<!-- Muscle group distribution -->
 		<MuscleGroupChart data={stats.muscleGroupDistribution} />
