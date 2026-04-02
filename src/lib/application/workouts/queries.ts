@@ -9,25 +9,7 @@ import {
 import { getProgressionRecommendation, type ProgressionResult } from '$lib/domain/workouts/progression.js';
 import type { ExerciseSession, ExerciseSet, TemplateExercise, WorkoutSession } from '$lib/models/types.js';
 import type { LastSessionData, WorkoutStateSnapshot } from './types.js';
-
-function buildSetsMap(sets: ExerciseSet[]): Map<string, ExerciseSet[]> {
-	const setsByExerciseSessionId = new Map<string, ExerciseSet[]>();
-
-	for (const set of sets) {
-		const exerciseSets = setsByExerciseSessionId.get(set.exerciseSessionId) ?? [];
-		exerciseSets.push(set);
-		setsByExerciseSessionId.set(set.exerciseSessionId, exerciseSets);
-	}
-
-	for (const [exerciseSessionId, exerciseSets] of setsByExerciseSessionId) {
-		setsByExerciseSessionId.set(
-			exerciseSessionId,
-			exerciseSets.sort((a, b) => a.setNumber - b.setNumber)
-		);
-	}
-
-	return setsByExerciseSessionId;
-}
+import { buildExerciseSetsMap } from './set-map.js';
 
 export function getLastExerciseSessionData(
 	exerciseId: string,
@@ -61,7 +43,7 @@ function createWorkoutSnapshot(
 	allExerciseSessions: ExerciseSession[],
 	allExerciseSets: ExerciseSet[]
 ): WorkoutStateSnapshot {
-	const allSetsByExerciseSessionId = buildSetsMap(allExerciseSets);
+	const allSetsByExerciseSessionId = buildExerciseSetsMap(allExerciseSets);
 	const currentSets = new Map<string, ExerciseSet[]>();
 	const lastSessionData = new Map<string, LastSessionData | null>();
 
@@ -144,7 +126,7 @@ export async function getAddExerciseData(
 		listAllExerciseSets()
 	]);
 
-	const setsByExerciseSessionId = buildSetsMap(allExerciseSets);
+	const setsByExerciseSessionId = buildExerciseSetsMap(allExerciseSets);
 	const lastSession = getLastExerciseSessionData(
 		exerciseId,
 		allExerciseSessions,
@@ -163,7 +145,7 @@ export async function getWorkoutProgressions(
 		listAllExerciseSets()
 	]);
 
-	const setsByExerciseSessionId = buildSetsMap(allExerciseSets);
+	const setsByExerciseSessionId = buildExerciseSetsMap(allExerciseSets);
 	const progressions = new Map<string, ProgressionResult>();
 
 	for (const exerciseSession of exerciseSessions) {

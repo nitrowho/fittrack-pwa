@@ -5,6 +5,14 @@ export async function listWorkoutSessions(): Promise<WorkoutSession[]> {
 	return db.workoutSessions.toArray();
 }
 
+export async function listCompletedWorkoutSessionsByStartedAtRange(
+	start: Date,
+	end: Date
+): Promise<WorkoutSession[]> {
+	const sessions = await db.workoutSessions.where('startedAt').between(start, end, true, true).toArray();
+	return sessions.filter((session) => session.completedAt !== null);
+}
+
 export async function getWorkoutSession(id: string): Promise<WorkoutSession | null> {
 	return (await db.workoutSessions.get(id)) ?? null;
 }
@@ -17,6 +25,16 @@ export async function listExerciseSessionsByWorkoutSessionId(
 	workoutSessionId: string
 ): Promise<ExerciseSession[]> {
 	return db.exerciseSessions.where('workoutSessionId').equals(workoutSessionId).sortBy('sortOrder');
+}
+
+export async function listExerciseSessionsByWorkoutSessionIds(
+	workoutSessionIds: string[]
+): Promise<ExerciseSession[]> {
+	if (workoutSessionIds.length === 0) {
+		return [];
+	}
+
+	return db.exerciseSessions.where('workoutSessionId').anyOf(workoutSessionIds).toArray();
 }
 
 export async function listExerciseSessionsByExerciseId(
@@ -33,6 +51,16 @@ export async function listExerciseSetsByExerciseSessionId(
 	exerciseSessionId: string
 ): Promise<ExerciseSet[]> {
 	return db.exerciseSets.where('exerciseSessionId').equals(exerciseSessionId).sortBy('setNumber');
+}
+
+export async function listExerciseSetsByExerciseSessionIds(
+	exerciseSessionIds: string[]
+): Promise<ExerciseSet[]> {
+	if (exerciseSessionIds.length === 0) {
+		return [];
+	}
+
+	return db.exerciseSets.where('exerciseSessionId').anyOf(exerciseSessionIds).toArray();
 }
 
 export async function createWorkoutSessionGraph(

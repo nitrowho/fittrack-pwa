@@ -16,7 +16,6 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import TrainingCalendar from '$lib/components/TrainingCalendar.svelte';
-	import StatsOverview from '$lib/components/statistics/StatsOverview.svelte';
 
 	type TabView = 'history' | 'stats';
 
@@ -164,7 +163,9 @@
 		{#key activeTab}
 			<div transition:fade={{ duration: 160 }}>
 			{#if activeTab === 'stats'}
-				<StatsOverview />
+				{#await import('$lib/components/statistics/StatsOverview.svelte') then { default: StatsOverview }}
+					<StatsOverview />
+				{/await}
 			{:else}
 
 			{#if !editing}

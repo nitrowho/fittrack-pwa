@@ -16,6 +16,7 @@ import {
 	updateExerciseSets,
 	updateWorkoutSessionNotes
 } from '$lib/repositories/workout-repository.js';
+import { buildExerciseSetsMap } from './set-map.js';
 
 function createSetsFromTemplate(
 	templateExercise: TemplateExercise,
@@ -41,22 +42,6 @@ function createSetsFromTemplate(
 	return sets;
 }
 
-function buildSetsMap(sets: ExerciseSet[]): Map<string, ExerciseSet[]> {
-	return new Map(
-		Array.from(
-			sets.reduce((groups, set) => {
-				const exerciseSets = groups.get(set.exerciseSessionId) ?? [];
-				exerciseSets.push(set);
-				groups.set(set.exerciseSessionId, exerciseSets);
-				return groups;
-			}, new Map<string, ExerciseSet[]>())
-		).map(([exerciseSessionId, exerciseSets]) => [
-			exerciseSessionId,
-			exerciseSets.sort((a, b) => a.setNumber - b.setNumber)
-		])
-	);
-}
-
 export async function startWorkout(templateId: string): Promise<WorkoutStateSnapshot> {
 	const { template, templateExercises, exerciseNames, allExerciseSessions, allExerciseSets } =
 		await getWorkoutStartData(templateId);
@@ -76,7 +61,7 @@ export async function startWorkout(templateId: string): Promise<WorkoutStateSnap
 		notes: ''
 	};
 
-	const existingSetsByExerciseSessionId = buildSetsMap(allExerciseSets);
+	const existingSetsByExerciseSessionId = buildExerciseSetsMap(allExerciseSets);
 	const exerciseSessions: ExerciseSession[] = [];
 	const exerciseSets: ExerciseSet[] = [];
 	const lastSessionData = new Map<string, LastSessionData | null>();
@@ -115,7 +100,7 @@ export async function startWorkout(templateId: string): Promise<WorkoutStateSnap
 	return {
 		session: workoutSession,
 		exerciseSessions,
-		sets: buildSetsMap(exerciseSets),
+		sets: buildExerciseSetsMap(exerciseSets),
 		lastSessionData
 	};
 }
