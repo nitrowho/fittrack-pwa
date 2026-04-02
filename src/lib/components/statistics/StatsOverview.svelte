@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import {
-		getStatisticsData,
+		getStatisticsOverviewData,
+		getStatisticsPeriodData,
 		getPeriodLabel,
 		type StatsPeriod,
-		type StatisticsData
+		type StatisticsData,
+		type StatisticsOverviewData,
+		type StatisticsPeriodData
 	} from '$lib/application/statistics/queries.js';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import { formatVolume, formatDuration } from '$lib/services/formatter.js';
@@ -22,19 +25,31 @@
 
 	let activePeriod = $state<StatsPeriod>('week');
 	let periodOffset = $state(0);
-	let stats = $state<StatisticsData | null>(null);
+	let periodStats = $state<StatisticsPeriodData | null>(null);
+	let overviewStats = $state<StatisticsOverviewData | null>(null);
 	let loading = $state(false);
+	let overviewLoading = $state(false);
 	let loadError = $state<string | null>(null);
 
 	let periodLabel = $derived(getPeriodLabel(activePeriod, periodOffset));
 	let canGoForward = $derived(periodOffset < 0);
+	let stats = $derived.by<StatisticsData | null>(() => {
+		if (!periodStats || !overviewStats) {
+			return null;
+		}
 
-	async function load() {
+		return {
+			...periodStats,
+			...overviewStats
+		};
+	});
+
+	async function loadPeriod() {
 		loading = true;
 		loadError = null;
 
 		try {
-			stats = await getStatisticsData(activePeriod, periodOffset);
+			periodStats = await getStatisticsPeriodData(activePeriod, periodOffset);
 		} catch (error) {
 			loadError =
 				error instanceof Error ? error.message : 'Die Statistiken konnten nicht geladen werden.';
@@ -43,18 +58,41 @@
 		}
 	}
 
+	async function loadOverview() {
+		overviewLoading = true;
+		loadError = null;
+
+		try {
+			overviewStats = await getStatisticsOverviewData();
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Die Statistiken konnten nicht geladen werden.';
+		} finally {
+			overviewLoading = false;
+		}
+	}
+
+	async function load() {
+		await Promise.all([
+			loadPeriod(),
+			overviewStats ? Promise.resolve() : loadOverview()
+		]);
+	}
+
 	function switchPeriod(period: StatsPeriod) {
 		activePeriod = period;
 		periodOffset = 0;
 	}
 
-	onMount(load);
+	onMount(() => {
+		void loadOverview();
+	});
 
 	$effect(() => {
 		// Reload when period or offset changes
 		activePeriod;
 		periodOffset;
-		load();
+		void loadPeriod();
 	});
 </script>
 
@@ -107,7 +145,7 @@
 	{/if}
 
 	<ErrorBoundary
-		loading={loading && !stats}
+		loading={(loading && !periodStats) || (overviewLoading && !overviewStats)}
 		error={loadError}
 		title="Statistiken konnten nicht geladen werden"
 		onretry={load}
