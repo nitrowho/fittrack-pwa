@@ -1,4 +1,5 @@
 import type { ExerciseSet } from '$lib/models/types.js';
+import { PROGRESSION_STAGNATION_THRESHOLD } from '$lib/constants.js';
 
 export type ProgressionResult =
 	| { type: 'increase'; newWeight: number }
@@ -49,7 +50,7 @@ export function getProgressionRecommendation(
 		break;
 	}
 
-	if (stagnationCount >= 3) {
+	if (stagnationCount >= PROGRESSION_STAGNATION_THRESHOLD) {
 		return { type: 'stagnation', sessionCount: stagnationCount };
 	}
 

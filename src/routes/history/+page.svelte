@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { deleteHistorySession } from '$lib/application/history/commands.js';
@@ -142,7 +143,8 @@
 		<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
 			<button
 				onclick={() => { activeTab = 'history'; editing = false; }}
-				class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'history'
+				aria-pressed={activeTab === 'history'}
+				class="flex min-h-12 flex-1 items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'history'
 					? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
 					: 'text-gray-500 dark:text-gray-400'}"
 			>
@@ -150,7 +152,8 @@
 			</button>
 			<button
 				onclick={() => { activeTab = 'stats'; editing = false; }}
-				class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'stats'
+				aria-pressed={activeTab === 'stats'}
+				class="flex min-h-12 flex-1 items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activeTab === 'stats'
 					? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
 					: 'text-gray-500 dark:text-gray-400'}"
 			>
@@ -158,9 +161,11 @@
 			</button>
 		</div>
 
-		{#if activeTab === 'stats'}
-			<StatsOverview />
-		{:else}
+		{#key activeTab}
+			<div transition:fade={{ duration: 160 }}>
+			{#if activeTab === 'stats'}
+				<StatsOverview />
+			{:else}
 
 			{#if !editing}
 				<TrainingCalendar
@@ -257,7 +262,9 @@
 					</div>
 				{/if}
 			{/if}
-		{/if}
+			{/if}
+			</div>
+		{/key}
 	</ErrorBoundary>
 </div>
 

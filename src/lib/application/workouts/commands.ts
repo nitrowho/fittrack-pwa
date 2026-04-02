@@ -1,4 +1,5 @@
 import { getAddExerciseData, getLastExerciseSessionData, getWorkoutStartData } from '$lib/application/workouts/queries.js';
+import { WORKOUT_EXERCISE_DEFAULTS } from '$lib/constants.js';
 import type { LastSessionData, WorkoutStateSnapshot } from '$lib/application/workouts/types.js';
 import { createUuid } from '$lib/domain/shared/uuid.js';
 import type { Exercise, ExerciseSet, WorkoutSession, ExerciseSession, TemplateExercise } from '$lib/models/types.js';
@@ -141,11 +142,6 @@ export async function startCustomWorkout(): Promise<WorkoutStateSnapshot> {
 	};
 }
 
-const DEFAULT_TARGET_SETS = 3;
-const DEFAULT_REP_RANGE_LOWER = 8;
-const DEFAULT_REP_RANGE_UPPER = 12;
-const DEFAULT_REST_DURATION_SECONDS = 90;
-
 export async function addExerciseToWorkout(
 	workoutSessionId: string,
 	exercise: Exercise,
@@ -163,14 +159,14 @@ export async function addExerciseToWorkout(
 		sortOrder,
 		startedAt: null,
 		completedAt: null,
-		targetSets: DEFAULT_TARGET_SETS,
-		repRangeLower: DEFAULT_REP_RANGE_LOWER,
-		repRangeUpper: DEFAULT_REP_RANGE_UPPER,
-		restDurationSeconds: DEFAULT_REST_DURATION_SECONDS
+		targetSets: WORKOUT_EXERCISE_DEFAULTS.targetSets,
+		repRangeLower: WORKOUT_EXERCISE_DEFAULTS.repRangeLower,
+		repRangeUpper: WORKOUT_EXERCISE_DEFAULTS.repRangeUpper,
+		restDurationSeconds: WORKOUT_EXERCISE_DEFAULTS.restDurationSeconds
 	};
 
 	const sets: ExerciseSet[] = [];
-	for (let index = 0; index < DEFAULT_TARGET_SETS; index++) {
+	for (let index = 0; index < WORKOUT_EXERCISE_DEFAULTS.targetSets; index++) {
 		const lastSet = lastSession?.sets[index];
 		sets.push({
 			id: createUuid(),

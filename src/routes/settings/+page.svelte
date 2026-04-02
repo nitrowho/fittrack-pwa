@@ -204,7 +204,9 @@
 				<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
 					<button
 						onclick={() => handleThemeChange('system')}
-						class="flex-1 rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'system'
+						aria-pressed={currentTheme === 'system'}
+						aria-label="Systemdesign verwenden"
+						class="flex min-h-12 flex-1 items-center justify-center rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'system'
 							? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
 							: 'text-gray-500 dark:text-gray-400'}"
 					>
@@ -212,7 +214,9 @@
 					</button>
 					<button
 						onclick={() => handleThemeChange('light')}
-						class="flex-1 rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'light'
+						aria-pressed={currentTheme === 'light'}
+						aria-label="Helles Design verwenden"
+						class="flex min-h-12 flex-1 items-center justify-center rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'light'
 							? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
 							: 'text-gray-500 dark:text-gray-400'}"
 					>
@@ -220,7 +224,9 @@
 					</button>
 					<button
 						onclick={() => handleThemeChange('dark')}
-						class="flex-1 rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'dark'
+						aria-pressed={currentTheme === 'dark'}
+						aria-label="Dunkles Design verwenden"
+						class="flex min-h-12 flex-1 items-center justify-center rounded-lg py-2 text-center text-sm font-medium transition-colors {currentTheme === 'dark'
 							? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
 							: 'text-gray-500 dark:text-gray-400'}"
 					>

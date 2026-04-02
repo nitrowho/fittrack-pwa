@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { scale } from 'svelte/transition';
 	import type { ExerciseSet } from '$lib/models/types.js';
 	import { formatWeight } from '$lib/services/formatter.js';
 
@@ -34,7 +35,7 @@
 </script>
 
 <div
-	class="flex items-center gap-2 rounded-xl px-3 py-2 {set.isCompleted
+	class="flex items-center gap-2 rounded-xl px-3 py-2 transition-colors {set.isCompleted
 		? 'bg-green-50 dark:bg-green-950'
 		: 'bg-gray-50 dark:bg-gray-900'}"
 >
@@ -81,13 +82,21 @@
 
 	<button
 		onclick={handleToggle}
-		class="ml-auto flex h-8 w-8 items-center justify-center rounded-full {set.isCompleted
+		class="ml-auto flex h-12 w-12 items-center justify-center rounded-full transition-colors {set.isCompleted
 			? 'bg-green-500 text-white'
 			: 'border-2 border-gray-300 dark:border-gray-600'}"
 		aria-label={set.isCompleted ? 'Satz rückgängig' : 'Satz abschließen'}
 	>
 		{#if set.isCompleted}
-			<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+			<svg
+				class="h-4 w-4"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke="currentColor"
+				stroke-width="3"
+				in:scale={{ duration: 160, start: 0.5 }}
+				out:scale={{ duration: 120, start: 0.8 }}
+			>
 				<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
 			</svg>
 		{/if}

@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { base } from '$app/paths';
+	import { TEMPLATE_EXERCISE_DEFAULTS } from '$lib/constants.js';
 	import { updateTemplate } from '$lib/application/templates/commands.js';
 	import { getTemplateEditorData } from '$lib/application/templates/queries.js';
 	import type { TemplateExerciseInput } from '$lib/application/templates/types.js';
@@ -60,10 +61,10 @@
 			...selectedExercises,
 			{
 				exerciseId,
-				targetSets: 3,
-				repRangeLower: 6,
-				repRangeUpper: 10,
-				restDurationSeconds: 180
+				targetSets: TEMPLATE_EXERCISE_DEFAULTS.targetSets,
+				repRangeLower: TEMPLATE_EXERCISE_DEFAULTS.repRangeLower,
+				repRangeUpper: TEMPLATE_EXERCISE_DEFAULTS.repRangeUpper,
+				restDurationSeconds: TEMPLATE_EXERCISE_DEFAULTS.restDurationSeconds
 			}
 		];
 		showPicker = false;

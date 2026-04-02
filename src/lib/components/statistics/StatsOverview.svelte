@@ -60,11 +60,12 @@
 
 <div class="space-y-4">
 	<!-- Period toggle -->
-	<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+		<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
 		{#each periods as period}
 			<button
 				onclick={() => switchPeriod(period.value)}
-				class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePeriod ===
+				aria-pressed={activePeriod === period.value}
+				class="flex min-h-12 flex-1 items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePeriod ===
 				period.value
 					? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
 					: 'text-gray-500 dark:text-gray-400'}"
@@ -79,7 +80,7 @@
 		<div class="flex items-center justify-between">
 			<button
 				onclick={() => periodOffset--}
-				class="rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
+				class="flex min-h-12 min-w-12 items-center justify-center rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
 				aria-label="Vorheriger Zeitraum"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -88,14 +89,14 @@
 			</button>
 			<button
 				onclick={() => (periodOffset = 0)}
-				class="text-sm font-medium text-gray-700 dark:text-gray-300"
+				class="min-h-12 px-3 text-sm font-medium text-gray-700 dark:text-gray-300"
 			>
 				{periodLabel}
 			</button>
 			<button
 				onclick={() => periodOffset++}
 				disabled={!canGoForward}
-				class="rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800 {!canGoForward ? 'opacity-30' : ''}"
+				class="flex min-h-12 min-w-12 items-center justify-center rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800 {!canGoForward ? 'opacity-30' : ''}"
 				aria-label="Nächster Zeitraum"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

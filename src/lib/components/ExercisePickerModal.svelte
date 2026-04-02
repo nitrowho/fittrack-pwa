@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { listExercisesByName } from '$lib/repositories/exercise-repository.js';
+	import { fade, fly } from 'svelte/transition';
+	import { listExercises } from '$lib/application/exercises/queries.js';
 	import { MUSCLE_GROUP_LABELS, type Exercise, type MuscleGroup } from '$lib/models/types.js';
 	import MuscleGroupBadge from './MuscleGroupBadge.svelte';
 
@@ -18,7 +19,7 @@
 	let searchInput = $state<HTMLInputElement | null>(null);
 
 	onMount(async () => {
-		exercises = await listExercisesByName();
+		exercises = await listExercises();
 	});
 
 	let availableExercises = $derived(
@@ -67,8 +68,8 @@
 		onselect(exercise);
 	}
 
-	function handleBackdropClick(event: MouseEvent) {
-		if (event.target === event.currentTarget) {
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
 			onclose();
 		}
 	}
@@ -84,19 +85,33 @@
 </script>
 
 {#if open}
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div
-		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
-		onclick={handleBackdropClick}
-	>
-		<div class="flex w-full max-w-lg flex-col rounded-t-2xl bg-white dark:bg-gray-900" style="max-height: calc(85vh - env(safe-area-inset-bottom, 0px));">
+	<div class="fixed inset-0 z-50 flex items-end justify-center">
+		<button
+			type="button"
+			class="absolute inset-0 bg-black/50"
+			aria-label="Übungsauswahl schließen"
+			onclick={onclose}
+			in:fade={{ duration: 180 }}
+			out:fade={{ duration: 120 }}
+		></button>
+		<div
+			class="relative flex w-full max-w-lg flex-col rounded-t-2xl bg-white dark:bg-gray-900"
+			style="max-height: calc(85vh - env(safe-area-inset-bottom, 0px));"
+			role="dialog"
+			aria-modal="true"
+			aria-label="Übung hinzufügen"
+			tabindex="-1"
+			onkeydown={handleKeydown}
+			in:fly={{ y: 24, duration: 180 }}
+			out:fly={{ y: 24, duration: 140 }}
+		>
 			<!-- Header -->
 			<div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
 				<h3 class="text-lg font-semibold">Übung hinzufügen</h3>
 				<button
 					onclick={onclose}
 					aria-label="Schließen"
-					class="rounded-lg p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+					class="flex min-h-12 min-w-12 items-center justify-center rounded-lg p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
 				>
 					<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -111,6 +126,7 @@
 					bind:value={search}
 					type="text"
 					placeholder="Übung suchen..."
+					aria-label="Übung suchen"
 					class="w-full rounded-xl bg-gray-100 px-4 py-2.5 text-sm outline-none dark:bg-gray-800"
 				/>
 			</div>
@@ -130,7 +146,7 @@
 									{#each group.exercises as exercise}
 										<button
 											onclick={() => handleSelect(exercise)}
-											class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-800 dark:active:bg-gray-700"
+											class="flex min-h-12 w-full items-center justify-between rounded-xl px-3 py-2.5 text-left hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-800 dark:active:bg-gray-700"
 										>
 											<span class="text-sm font-medium">{exercise.name}</span>
 											<MuscleGroupBadge muscleGroup={exercise.muscleGroup} />

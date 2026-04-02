@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
 	import { onMount } from 'svelte';
+	import { TEMPLATE_EXERCISE_DEFAULTS } from '$lib/constants.js';
 	import { createTemplate } from '$lib/application/templates/commands.js';
 	import { listTemplateFormExercises } from '$lib/application/templates/queries.js';
 	import type { TemplateExerciseInput } from '$lib/application/templates/types.js';
@@ -59,10 +60,10 @@
 			...selectedExercises,
 			{
 				exerciseId,
-				targetSets: 3,
-				repRangeLower: 6,
-				repRangeUpper: 10,
-				restDurationSeconds: 180
+				targetSets: TEMPLATE_EXERCISE_DEFAULTS.targetSets,
+				repRangeLower: TEMPLATE_EXERCISE_DEFAULTS.repRangeLower,
+				repRangeUpper: TEMPLATE_EXERCISE_DEFAULTS.repRangeUpper,
+				restDurationSeconds: TEMPLATE_EXERCISE_DEFAULTS.restDurationSeconds
 			}
 		];
 		showPicker = false;
