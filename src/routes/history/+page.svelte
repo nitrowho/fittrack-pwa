@@ -169,14 +169,16 @@
 			{:else}
 
 			{#if !editing}
-				<TrainingCalendar
-					year={calendarYear}
-					month={calendarMonth}
-					{trainingDays}
-					{selectedDate}
-					onselect={handleSelectDate}
-					onnavigate={handleNavigate}
-				/>
+				<div class="mb-4">
+					<TrainingCalendar
+						year={calendarYear}
+						month={calendarMonth}
+						{trainingDays}
+						{selectedDate}
+						onselect={handleSelectDate}
+						onnavigate={handleNavigate}
+					/>
+				</div>
 			{/if}
 
 			{#if selectedDate}
