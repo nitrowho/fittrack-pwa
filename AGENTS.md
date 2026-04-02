@@ -26,6 +26,10 @@ pnpm run preview          # Preview production build
 pnpm run check            # Type check (svelte-kit sync + svelte-check)
 ```
 
+### Version Bumping
+
+The app version is defined in `package.json` under the `"version"` field. To bump the version, update this single field — no other files need changing.
+
 ## Architecture
 
 ### Data Model
@@ -46,7 +50,7 @@ Six IndexedDB tables via Dexie: `exercises`, `workoutTemplates`, `templateExerci
 
 ### Routing
 
-SvelteKit file-based routing: `/` (home/dashboard), `/workout/[id]`, `/history`, `/history/[id]`, `/templates`, `/templates/new`, `/templates/[id]`, `/templates/[id]/edit`, `/exercises`, `/settings`.
+SvelteKit file-based routing: `/` (home/dashboard), `/workout/[id]`, `/history`, `/history/[id]`, `/templates`, `/templates/new`, `/templates/[id]`, `/templates/[id]/edit`, `/exercises`, `/settings`, `/achievements`.
 
 ### Number Formatting
 
@@ -63,6 +67,7 @@ Follow these architecture rules for all new code and when touching existing code
 - Multi-table writes, snapshot creation, and cascade deletes must live in application/repository code and use explicit transactions.
 - Prefer feature-level methods such as `getDashboardData()`, `saveTemplate()`, or `startWorkout()` over table-level access.
 - Keep all user-visible text in German and use shared formatter helpers for dates, weights, and volume.
+- After every implementation, check whether any documentation needs to be updated. Update the affected docs whenever behavior, architecture, data model, commands, routes, or user workflows have changed.
 - Migrate incrementally. Do not do a big-bang rewrite, but do not introduce new code that bypasses these boundaries.
 
 ### Git Commits

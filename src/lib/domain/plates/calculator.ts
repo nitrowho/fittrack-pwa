@@ -86,10 +86,18 @@ export function findNearestAchievable(
 		return sum + p.weight * qty;
 	}, 0);
 
+	let foundUpper = false;
 	while (upper < maxWeight) {
 		upper += step;
 		const result = calculatePlates(upper, config);
-		if (!result.impossible && !result.belowBarWeight) break;
+		if (!result.impossible && !result.belowBarWeight) {
+			foundUpper = true;
+			break;
+		}
+	}
+
+	if (!foundUpper) {
+		upper = lower;
 	}
 
 	return { lower, upper };

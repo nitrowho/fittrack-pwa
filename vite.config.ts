@@ -1,12 +1,17 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { version } from './package.json';
 
 export default defineConfig({
 	define: {
 		__APP_VERSION__: JSON.stringify(version)
+	},
+	test: {
+		environment: 'jsdom',
+		include: ['src/**/*.{test,spec}.{ts,js}'],
+		setupFiles: ['./src/test/setup.ts']
 	},
 	preview: {
 		allowedHosts: ['.trycloudflare.com']
@@ -29,15 +34,15 @@ export default defineConfig({
 				background_color: '#000000',
 				theme_color: '#000000',
 				icons: [
-					{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-					{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-					{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+					{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+					{ src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+					{ src: 'icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
 				]
 			},
 			workbox: {
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
 				clientsClaim: true,
-				skipWaiting: true
+				skipWaiting: false
 			}
 		})
 	]

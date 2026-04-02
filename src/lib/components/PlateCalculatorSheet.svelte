@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
 	import { calculatePlates, findNearestAchievable } from '$lib/domain/plates/calculator.js';
 	import { formatWeightPrecise } from '$lib/services/formatter.js';
 	import type { PlateConfig } from '$lib/models/types.js';
@@ -17,33 +18,37 @@
 		result.impossible ? findNearestAchievable(targetWeight, plateConfig) : null
 	);
 
-	function handleBackdropClick(e: MouseEvent) {
-		if (e.target === e.currentTarget) onclose();
-	}
-
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') onclose();
 	}
 </script>
 
 {#if open}
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div
-		class="fixed inset-0 z-[60] flex items-end justify-center bg-black/50"
-		onclick={handleBackdropClick}
-		onkeydown={handleKeydown}
-	>
+	<div class="fixed inset-0 z-[60] flex items-end justify-center">
+		<button
+			type="button"
+			class="absolute inset-0 bg-black/50"
+			aria-label="Hantelscheiben-Rechner schließen"
+			onclick={onclose}
+			in:fade={{ duration: 180 }}
+			out:fade={{ duration: 120 }}
+		></button>
 		<div
-			class="sheet-bottom-padding w-full max-w-lg animate-slide-up rounded-t-2xl bg-white p-5 shadow-xl dark:bg-gray-900"
+			class="sheet-bottom-padding relative w-full max-w-lg rounded-t-2xl bg-white p-5 shadow-xl dark:bg-gray-900"
 			role="dialog"
 			aria-label="Hantelscheiben-Rechner"
+			aria-modal="true"
+			tabindex="-1"
+			onkeydown={handleKeydown}
+			in:fly={{ y: 24, duration: 180 }}
+			out:fly={{ y: 24, duration: 140 }}
 		>
 			<!-- Header -->
 			<div class="mb-4 flex items-center justify-between">
 				<h3 class="text-lg font-semibold">Hantelscheiben-Rechner</h3>
 				<button
 					onclick={onclose}
-					class="rounded-full p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+					class="flex min-h-12 min-w-12 items-center justify-center rounded-full p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
 					aria-label="Schließen"
 				>
 					<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -112,19 +117,6 @@
 {/if}
 
 <style>
-	@keyframes slide-up {
-		from {
-			transform: translateY(100%);
-		}
-		to {
-			transform: translateY(0);
-		}
-	}
-
-	:global(.animate-slide-up) {
-		animation: slide-up 0.2s ease-out;
-	}
-
 	.sheet-bottom-padding {
 		padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 	}

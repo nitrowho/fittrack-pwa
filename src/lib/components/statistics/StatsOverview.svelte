@@ -1,16 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import {
-		getStatisticsData,
+		getStatisticsOverviewData,
+		getStatisticsPeriodData,
 		getPeriodLabel,
 		type StatsPeriod,
-		type StatisticsData
+		type StatisticsData,
+		type StatisticsOverviewData,
+		type StatisticsPeriodData
 	} from '$lib/application/statistics/queries.js';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import { formatVolume, formatDuration } from '$lib/services/formatter.js';
 	import StatCard from './StatCard.svelte';
 	import VolumeChart from './VolumeChart.svelte';
 	import MuscleGroupChart from './MuscleGroupChart.svelte';
 	import PersonalRecords from './PersonalRecords.svelte';
+	import E1RMChart from './E1RMChart.svelte';
 
 	const periods: { value: StatsPeriod; label: string }[] = [
 		{ value: 'week', label: 'Woche' },
@@ -20,16 +25,58 @@
 
 	let activePeriod = $state<StatsPeriod>('week');
 	let periodOffset = $state(0);
-	let stats = $state<StatisticsData | null>(null);
+	let periodStats = $state<StatisticsPeriodData | null>(null);
+	let overviewStats = $state<StatisticsOverviewData | null>(null);
 	let loading = $state(false);
+	let overviewLoading = $state(false);
+	let loadError = $state<string | null>(null);
 
 	let periodLabel = $derived(getPeriodLabel(activePeriod, periodOffset));
 	let canGoForward = $derived(periodOffset < 0);
+	let stats = $derived.by<StatisticsData | null>(() => {
+		if (!periodStats || !overviewStats) {
+			return null;
+		}
+
+		return {
+			...periodStats,
+			...overviewStats
+		};
+	});
+
+	async function loadPeriod() {
+		loading = true;
+		loadError = null;
+
+		try {
+			periodStats = await getStatisticsPeriodData(activePeriod, periodOffset);
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Die Statistiken konnten nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function loadOverview() {
+		overviewLoading = true;
+		loadError = null;
+
+		try {
+			overviewStats = await getStatisticsOverviewData();
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Die Statistiken konnten nicht geladen werden.';
+		} finally {
+			overviewLoading = false;
+		}
+	}
 
 	async function load() {
-		loading = true;
-		stats = await getStatisticsData(activePeriod, periodOffset);
-		loading = false;
+		await Promise.all([
+			loadPeriod(),
+			overviewStats ? Promise.resolve() : loadOverview()
+		]);
 	}
 
 	function switchPeriod(period: StatsPeriod) {
@@ -37,23 +84,26 @@
 		periodOffset = 0;
 	}
 
-	onMount(load);
+	onMount(() => {
+		void loadOverview();
+	});
 
 	$effect(() => {
 		// Reload when period or offset changes
 		activePeriod;
 		periodOffset;
-		load();
+		void loadPeriod();
 	});
 </script>
 
 <div class="space-y-4">
 	<!-- Period toggle -->
-	<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
+		<div class="flex rounded-xl bg-gray-100 p-1 dark:bg-gray-800">
 		{#each periods as period}
 			<button
 				onclick={() => switchPeriod(period.value)}
-				class="flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePeriod ===
+				aria-pressed={activePeriod === period.value}
+				class="flex min-h-12 flex-1 items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {activePeriod ===
 				period.value
 					? 'bg-white text-blue-600 shadow-sm dark:bg-gray-700 dark:text-blue-400'
 					: 'text-gray-500 dark:text-gray-400'}"
@@ -68,7 +118,7 @@
 		<div class="flex items-center justify-between">
 			<button
 				onclick={() => periodOffset--}
-				class="rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
+				class="flex min-h-12 min-w-12 items-center justify-center rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800"
 				aria-label="Vorheriger Zeitraum"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -77,14 +127,14 @@
 			</button>
 			<button
 				onclick={() => (periodOffset = 0)}
-				class="text-sm font-medium text-gray-700 dark:text-gray-300"
+				class="min-h-12 px-3 text-sm font-medium text-gray-700 dark:text-gray-300"
 			>
 				{periodLabel}
 			</button>
 			<button
 				onclick={() => periodOffset++}
 				disabled={!canGoForward}
-				class="rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800 {!canGoForward ? 'opacity-30' : ''}"
+				class="flex min-h-12 min-w-12 items-center justify-center rounded-lg p-2 text-gray-500 active:bg-gray-100 dark:text-gray-400 dark:active:bg-gray-800 {!canGoForward ? 'opacity-30' : ''}"
 				aria-label="Nächster Zeitraum"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -93,6 +143,24 @@
 			</button>
 		</div>
 	{/if}
+
+	<ErrorBoundary
+		loading={(loading && !periodStats) || (overviewLoading && !overviewStats)}
+		error={loadError}
+		title="Statistiken konnten nicht geladen werden"
+		onretry={load}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-3">
+				<div class="flex gap-3">
+					<div class="h-24 flex-1 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+					<div class="h-24 flex-1 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+					<div class="h-24 flex-1 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				</div>
+				<div class="h-56 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-56 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+			</div>
+		{/snippet}
 
 	{#if stats}
 		<!-- Summary cards -->
@@ -139,14 +207,14 @@
 			<VolumeChart data={stats.volumeTrend} />
 		{/if}
 
+		<!-- e1RM progression chart -->
+		<E1RMChart exercises={stats.e1rmHistory} />
+
 		<!-- Muscle group distribution -->
 		<MuscleGroupChart data={stats.muscleGroupDistribution} />
 
 		<!-- Personal records -->
 		<PersonalRecords records={stats.personalRecords} />
-	{:else if loading}
-		<div class="flex items-center justify-center py-12">
-			<div class="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
-		</div>
 	{/if}
+	</ErrorBoundary>
 </div>

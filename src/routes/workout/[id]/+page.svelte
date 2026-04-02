@@ -13,6 +13,10 @@
 	import ExercisePickerModal from '$lib/components/ExercisePickerModal.svelte';
 	import PlateCalculatorSheet from '$lib/components/PlateCalculatorSheet.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
+	import PRCelebration from '$lib/components/PRCelebration.svelte';
+	import { checkForPRs } from '$lib/application/workouts/pr-detection.js';
+	import type { DetectedPR } from '$lib/domain/workouts/personal-records.js';
 	import type { ProgressionResult } from '$lib/domain/workouts/progression.js';
 	import type { Exercise, ExerciseSet, PlateConfig } from '$lib/models/types.js';
 
@@ -20,22 +24,48 @@
 	let showFinishDialog = $state(false);
 	let showCancelDialog = $state(false);
 	let showExercisePicker = $state(false);
+	let showNotes = $state(false);
 	let barbellExerciseIds = $state<Set<string>>(new Set());
 	let plateConfig = $state<PlateConfig>({ barWeight: 20, plates: [] });
 	let showPlateCalc = $state(false);
 	let plateCalcWeight = $state(0);
+	let loading = $state(true);
+	let loadError = $state<string | null>(null);
+	let activePRs = $state<DetectedPR[]>([]);
+	let prExerciseName = $state('');
 
-	onMount(async () => {
-		const id = page.params.id as string;
-		if (!workoutStore.isActive || workoutStore.session?.id !== id) {
-			await workoutStore.resumeWorkout(id);
-		}
-		if (!workoutStore.isActive) {
-			goto(`${base}/`);
-			return;
-		}
-		await Promise.all([loadProgressions(), loadBarbellFlags(), loadPlateConfig()]);
+	onMount(() => {
+		void loadWorkout();
 	});
+
+	async function loadWorkout() {
+		const id = page.params.id as string;
+		loading = true;
+		loadError = null;
+
+		try {
+			if (!workoutStore.isActive || workoutStore.session?.id !== id) {
+				await workoutStore.resumeWorkout(id);
+			}
+			if (!workoutStore.isActive) {
+				goto(`${base}/`);
+				return;
+			}
+			showNotes = !!workoutStore.session?.notes;
+			await Promise.all([loadProgressions(), loadBarbellFlags(), loadPlateConfig()]);
+		} catch (error) {
+			loadError =
+				error instanceof Error ? error.message : 'Das Workout konnte nicht geladen werden.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	let notesTimer: ReturnType<typeof setTimeout> | null = null;
+	function handleNotesInput(value: string) {
+		if (notesTimer) clearTimeout(notesTimer);
+		notesTimer = setTimeout(() => workoutStore.updateNotes(value), 500);
+	}
 
 	async function loadBarbellFlags() {
 		const exercises = await listExercises();
@@ -57,6 +87,21 @@
 
 	async function handleComplete(setId: string, weight: number, reps: number) {
 		await workoutStore.completeSet(setId, weight, reps);
+
+		const exerciseSession = workoutStore.exerciseSessions.find((es) => {
+			const sets = workoutStore.sets.get(es.id) ?? [];
+			return sets.some((s) => s.id === setId);
+		});
+		if (exerciseSession) {
+			const currentSetIds = new Set(
+				Array.from(workoutStore.sets.values()).flatMap((sets) => sets.map((s) => s.id))
+			);
+			const prs = await checkForPRs(exerciseSession.exerciseId, weight, reps, currentSetIds);
+			if (prs.length > 0) {
+				prExerciseName = exerciseSession.exerciseName;
+				activePRs = prs;
+			}
+		}
 	}
 
 	async function handleUncomplete(setId: string) {
@@ -94,6 +139,11 @@
 	);
 
 	async function finishWorkout() {
+		if (notesTimer) {
+			clearTimeout(notesTimer);
+			const textarea = document.querySelector('textarea') as HTMLTextAreaElement | null;
+			if (textarea) await workoutStore.updateNotes(textarea.value);
+		}
 		await workoutStore.finishWorkout();
 		goto(`${base}/`);
 	}
@@ -114,8 +164,22 @@
 	);
 </script>
 
+<div class="p-4">
+	<ErrorBoundary
+		loading={loading}
+		error={loadError}
+		title="Workout konnte nicht geladen werden"
+		onretry={loadWorkout}
+	>
+		{#snippet loadingContent()}
+			<div class="space-y-3">
+				<div class="h-24 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+				<div class="h-48 animate-pulse rounded-2xl bg-white dark:bg-gray-900"></div>
+			</div>
+		{/snippet}
+
 {#if workoutStore.isActive}
-	<div class="space-y-4 p-4">
+	<div class="space-y-4">
 		<!-- Session header -->
 		<div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
 			<h1 class="text-xl font-bold">{workoutStore.session?.templateName}</h1>
@@ -169,6 +233,34 @@
 			Übung hinzufügen
 		</button>
 
+		<!-- Notes -->
+		<button
+			onclick={() => (showNotes = !showNotes)}
+			class="flex w-full items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold shadow-sm dark:bg-gray-900 {workoutStore.session?.notes ? 'text-blue-500' : 'text-gray-500'}"
+		>
+			<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+			</svg>
+			Notizen
+			{#if workoutStore.session?.notes}
+				<span class="text-xs text-gray-400">bearbeitet</span>
+			{/if}
+			<svg class="ml-auto h-4 w-4 transition-transform {showNotes ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+			</svg>
+		</button>
+		{#if showNotes}
+			<div class="rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+				<textarea
+					class="w-full rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-800"
+					rows="3"
+					placeholder="Notizen zum Workout..."
+					value={workoutStore.session?.notes ?? ''}
+					oninput={(e) => handleNotesInput(e.currentTarget.value)}
+				></textarea>
+			</div>
+		{/if}
+
 		<!-- Action buttons -->
 		<div class="flex gap-3 pt-2">
 			<button
@@ -218,4 +310,12 @@
 		{plateConfig}
 		onclose={() => (showPlateCalc = false)}
 	/>
+
+	<PRCelebration
+		prs={activePRs}
+		exerciseName={prExerciseName}
+		ondismiss={() => (activePRs = [])}
+	/>
 {/if}
+	</ErrorBoundary>
+</div>

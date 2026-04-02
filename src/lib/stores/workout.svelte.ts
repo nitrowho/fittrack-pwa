@@ -10,6 +10,7 @@ import {
 	startCustomWorkout as createCustomWorkout,
 	startWorkout as createWorkout,
 	uncompleteWorkoutSet,
+	updateNotes as updateWorkoutNotes,
 	updateWorkoutSet,
 	updateWorkoutSets
 } from '$lib/application/workouts/commands.js';
@@ -235,6 +236,12 @@ class WorkoutStore {
 				this.updateSetInState(set.id, { weight });
 			}
 		}
+	}
+
+	async updateNotes(notes: string): Promise<void> {
+		if (!this.session) return;
+		await updateWorkoutNotes(this.session.id, notes);
+		this.session = { ...this.session, notes };
 	}
 
 	async finishWorkout(): Promise<void> {

@@ -20,14 +20,12 @@
 
 	let { data }: Props = $props();
 
-	let canvas: HTMLCanvasElement = $state(undefined!);
-	let chart: Chart | null = $state(null);
+	let canvas = $state<HTMLCanvasElement | undefined>();
+	let chart: Chart | null = null;
 
 	function createChart() {
-		if (chart) {
-			chart.destroy();
-			chart = null;
-		}
+		chart?.destroy();
+		chart = null;
 		if (!canvas || data.length === 0) return;
 
 		chart = new Chart(canvas, {

@@ -1,4 +1,5 @@
 import { getAddExerciseData, getLastExerciseSessionData, getWorkoutStartData } from '$lib/application/workouts/queries.js';
+import { WORKOUT_EXERCISE_DEFAULTS } from '$lib/constants.js';
 import type { LastSessionData, WorkoutStateSnapshot } from '$lib/application/workouts/types.js';
 import { createUuid } from '$lib/domain/shared/uuid.js';
 import type { Exercise, ExerciseSet, WorkoutSession, ExerciseSession, TemplateExercise } from '$lib/models/types.js';
@@ -12,8 +13,10 @@ import {
 	finishWorkoutSession,
 	listExerciseSetsByExerciseSessionId,
 	updateExerciseSet,
-	updateExerciseSets
+	updateExerciseSets,
+	updateWorkoutSessionNotes
 } from '$lib/repositories/workout-repository.js';
+import { buildExerciseSetsMap } from './set-map.js';
 
 function createSetsFromTemplate(
 	templateExercise: TemplateExercise,
@@ -39,22 +42,6 @@ function createSetsFromTemplate(
 	return sets;
 }
 
-function buildSetsMap(sets: ExerciseSet[]): Map<string, ExerciseSet[]> {
-	return new Map(
-		Array.from(
-			sets.reduce((groups, set) => {
-				const exerciseSets = groups.get(set.exerciseSessionId) ?? [];
-				exerciseSets.push(set);
-				groups.set(set.exerciseSessionId, exerciseSets);
-				return groups;
-			}, new Map<string, ExerciseSet[]>())
-		).map(([exerciseSessionId, exerciseSets]) => [
-			exerciseSessionId,
-			exerciseSets.sort((a, b) => a.setNumber - b.setNumber)
-		])
-	);
-}
-
 export async function startWorkout(templateId: string): Promise<WorkoutStateSnapshot> {
 	const { template, templateExercises, exerciseNames, allExerciseSessions, allExerciseSets } =
 		await getWorkoutStartData(templateId);
@@ -74,7 +61,7 @@ export async function startWorkout(templateId: string): Promise<WorkoutStateSnap
 		notes: ''
 	};
 
-	const existingSetsByExerciseSessionId = buildSetsMap(allExerciseSets);
+	const existingSetsByExerciseSessionId = buildExerciseSetsMap(allExerciseSets);
 	const exerciseSessions: ExerciseSession[] = [];
 	const exerciseSets: ExerciseSet[] = [];
 	const lastSessionData = new Map<string, LastSessionData | null>();
@@ -113,7 +100,7 @@ export async function startWorkout(templateId: string): Promise<WorkoutStateSnap
 	return {
 		session: workoutSession,
 		exerciseSessions,
-		sets: buildSetsMap(exerciseSets),
+		sets: buildExerciseSetsMap(exerciseSets),
 		lastSessionData
 	};
 }
@@ -140,11 +127,6 @@ export async function startCustomWorkout(): Promise<WorkoutStateSnapshot> {
 	};
 }
 
-const DEFAULT_TARGET_SETS = 3;
-const DEFAULT_REP_RANGE_LOWER = 8;
-const DEFAULT_REP_RANGE_UPPER = 12;
-const DEFAULT_REST_DURATION_SECONDS = 90;
-
 export async function addExerciseToWorkout(
 	workoutSessionId: string,
 	exercise: Exercise,
@@ -162,14 +144,14 @@ export async function addExerciseToWorkout(
 		sortOrder,
 		startedAt: null,
 		completedAt: null,
-		targetSets: DEFAULT_TARGET_SETS,
-		repRangeLower: DEFAULT_REP_RANGE_LOWER,
-		repRangeUpper: DEFAULT_REP_RANGE_UPPER,
-		restDurationSeconds: DEFAULT_REST_DURATION_SECONDS
+		targetSets: WORKOUT_EXERCISE_DEFAULTS.targetSets,
+		repRangeLower: WORKOUT_EXERCISE_DEFAULTS.repRangeLower,
+		repRangeUpper: WORKOUT_EXERCISE_DEFAULTS.repRangeUpper,
+		restDurationSeconds: WORKOUT_EXERCISE_DEFAULTS.restDurationSeconds
 	};
 
 	const sets: ExerciseSet[] = [];
-	for (let index = 0; index < DEFAULT_TARGET_SETS; index++) {
+	for (let index = 0; index < WORKOUT_EXERCISE_DEFAULTS.targetSets; index++) {
 		const lastSet = lastSession?.sets[index];
 		sets.push({
 			id: createUuid(),
@@ -259,6 +241,13 @@ export async function finishWorkout(workoutSessionId: string): Promise<void> {
 
 export async function cancelWorkout(workoutSessionId: string): Promise<void> {
 	await deleteWorkoutSession(workoutSessionId);
+}
+
+export async function updateNotes(
+	workoutSessionId: string,
+	notes: string
+): Promise<void> {
+	await updateWorkoutSessionNotes(workoutSessionId, notes);
 }
 
 export async function applyWeightIncrease(

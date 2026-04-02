@@ -37,6 +37,9 @@
 			</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">
 				{stats.currentStreak === 1 ? 'Woche' : 'Wochen'}
+				{#if stats.bestStreak > stats.currentStreak}
+					<span class="text-gray-400 dark:text-gray-500">(Rekord: {stats.bestStreak})</span>
+				{/if}
 			</p>
 		</div>
 	</div>
