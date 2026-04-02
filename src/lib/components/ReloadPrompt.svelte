@@ -12,6 +12,7 @@
 	let showInstallPrompt = $state(false);
 	let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = $state(null);
 	let deferredInstallPrompt: BeforeInstallPromptEvent | null = $state(null);
+	let registration: ServiceWorkerRegistration | null = null;
 
 	const OFFLINE_READY_KEY = 'fittrack-offline-ready-shown';
 	const INSTALL_PROMPT_DISMISSED_KEY = 'fittrack-install-prompt-dismissed';
@@ -34,6 +35,12 @@
 
 	function handleConnectivityChange() {
 		isOffline = !navigator.onLine;
+	}
+
+	function handleVisibilityChange() {
+		if (document.visibilityState === 'visible' && registration) {
+			registration.update();
+		}
 	}
 
 	function handleBeforeInstallPrompt(event: Event) {
@@ -79,6 +86,7 @@
 						showOfflineReady();
 					}
 				});
+				registration = await navigator.serviceWorker?.getRegistration();
 			} catch {
 				// PWA registration not available in dev
 			}
@@ -87,11 +95,13 @@
 		window.addEventListener('online', handleConnectivityChange);
 		window.addEventListener('offline', handleConnectivityChange);
 		window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 
 		return () => {
 			window.removeEventListener('online', handleConnectivityChange);
 			window.removeEventListener('offline', handleConnectivityChange);
 			window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
 		};
 	});
 
