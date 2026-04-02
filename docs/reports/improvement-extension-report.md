@@ -42,11 +42,11 @@ These are already defined in the data model but not yet exposed in the UI:
 
 All of these work fully offline — no backend needed.
 
-- [ ] **Workout streak tracker** — Current streak + longest streak on dashboard. Consecutive weeks with N+ workouts. *(Low | High)*
-- [ ] **PR celebration animation** — Toast/confetti when a new personal record is detected (weight PR, rep PR, volume PR, e1RM PR). *(Low | High)*
-- [ ] **Achievement/badge system** — 10–15 locally-computed badges: first workout, 100 workouts, all muscle groups in a week, tonnage milestones, etc. *(Medium | High)*
-- [ ] **Streak-at-risk warning** — "Trainiere heute, um deine 12-Wochen-Serie zu halten!" on dashboard. *(Low | Medium)*
-- [ ] **Progress summary card** — "Dein Bankdruecken e1RM hat sich in 3 Monaten um 15% verbessert" — periodic insight cards. *(Medium | Medium)*
+- [x] **Workout streak tracker** — Current streak + longest streak on dashboard. Consecutive weeks with N+ workouts. *(Low | High)*
+- [x] **PR celebration animation** — Toast/confetti when a new personal record is detected (weight PR, rep PR, volume PR, e1RM PR). *(Low | High)*
+- [x] **Achievement/badge system** — 10–15 locally-computed badges: first workout, 100 workouts, all muscle groups in a week, tonnage milestones, etc. *(Medium | High)*
+- [x] **Streak-at-risk warning** — "Trainiere heute, um deine 12-Wochen-Serie zu halten!" on dashboard. *(Low | Medium)*
+- [x] **Progress summary card** — "Dein Bankdruecken e1RM hat sich in 3 Monaten um 15% verbessert" — periodic insight cards. *(Medium | Medium)*
 
 ### 2.4 Data & Visualization
 
@@ -121,8 +121,8 @@ All of these work fully offline — no backend needed.
 - [x] Auto-fill weight/reps from last session
 - [ ] RIR optional input field
 - [x] Workout notes editing
-- [ ] PR detection + celebration toast
-- [ ] Workout streak on dashboard
+- [x] PR detection + celebration toast
+- [x] Workout streak on dashboard
 - [ ] Stepper +/- controls for weight/reps
 - [ ] Quick-duplicate last set button
 - [ ] Per-exercise elapsed time display
@@ -133,7 +133,7 @@ All of these work fully offline — no backend needed.
 
 - [x] Estimated 1RM calculation + line chart per exercise
 - [ ] Weekly volume per muscle group chart
-- [ ] Achievement/badge system
+- [x] Achievement/badge system
 - [ ] Auto-deload recommendation
 - [ ] Filterable analytics dashboard
 - [ ] Import from Strong CSV
@@ -161,8 +161,8 @@ All of these work fully offline — no backend needed.
 | e1RM tracking | No | Yes | Yes | No | Yes |
 | RPE/RIR logging | No | No | Yes | No | No |
 | Supersets | No | Yes | Yes | Yes | Yes |
-| Achievements | No | No | Yes | Yes | No |
-| Streaks | No | No | Yes | No | No |
+| Achievements | Yes | No | Yes | Yes | No |
+| Streaks | Yes | No | Yes | No | No |
 | Import from other apps | No | No | Yes | No | No |
 | Plate calculator | Yes | Yes | No | No | No |
 | Offline-first | Yes | Partial | No | No | No |

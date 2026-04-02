@@ -7,7 +7,10 @@
 - Recommended next template based on the last completed template
 - Button to start a free workout without a template
 - Recent completed sessions with date and duration
-- Weekly stats card linking directly to the statistics tab in history
+- Weekly stats card with current streak and best streak record, linking directly to the statistics tab in history
+- Streak-at-risk warning when the user has an active streak but no workouts yet this week
+- Progress insight cards showing e1RM improvements per exercise (last 4 weeks vs. prior period)
+- Achievement/badge cards with progress bars (14 badges covering workout count, volume, streak, and weight milestones)
 
 ## Active Workout
 
@@ -22,6 +25,7 @@
   - remove-exercise action for the current workout
 - Add existing exercises to the active workout through a picker modal
 - Workout notes section with debounced autosave while typing
+- PR celebration toast with confetti animation when a new personal record is detected (weight, rep, volume, or e1RM)
 - Finish confirmation and cancel confirmation
 - Wake lock handling during active sessions, including reacquiring after visibility changes
 
