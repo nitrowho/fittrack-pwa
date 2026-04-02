@@ -64,6 +64,7 @@ export interface DashboardStats {
 	volumeThisWeek: number;
 	currentStreak: number;
 	bestStreak: number;
+	streakAtRisk: boolean;
 }
 
 interface StatisticsCollection {
@@ -604,6 +605,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 			0
 		),
 		currentStreak,
-		bestStreak
+		bestStreak,
+		streakAtRisk: currentStreak > 0 && weekSessions.length === 0
 	};
 }

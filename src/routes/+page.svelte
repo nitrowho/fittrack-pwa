@@ -103,6 +103,16 @@
 			</a>
 		{/if}
 
+		<!-- Streak at risk warning -->
+		{#if dashboardStats?.streakAtRisk && !inProgressSession}
+			<div class="flex items-center gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-900 dark:bg-orange-950">
+				<span class="text-xl" aria-hidden="true">⚠️</span>
+				<p class="text-sm font-medium text-orange-800 dark:text-orange-200">
+					Trainiere diese Woche, um deine {dashboardStats.currentStreak}-Wochen-Serie zu halten!
+				</p>
+			</div>
+		{/if}
+
 		<!-- Weekly stats summary -->
 		{#if dashboardStats && (dashboardStats.workoutsThisWeek > 0 || dashboardStats.currentStreak > 0)}
 			<DashboardStatsCard stats={dashboardStats} />
