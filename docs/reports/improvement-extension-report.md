@@ -68,49 +68,49 @@ All of these work fully offline — no backend needed.
 
 ### 3.1 Error Handling & Resilience
 
-- [ ] Add try-catch to `onMount` async calls (`+page.svelte` in dashboard, history, settings, templates) — silent failures lead to blank screens.
-- [ ] Create reusable `ErrorBoundary.svelte` wrapping async data loading.
-- [ ] Add error states to all data-loading pages.
+- [x] Add try-catch to `onMount` async calls (`+page.svelte` in dashboard, history, settings, templates) — silent failures lead to blank screens.
+- [x] Create reusable `ErrorBoundary.svelte` wrapping async data loading.
+- [x] Add error states to all data-loading pages.
 
 ### 3.2 UX Polish
 
-- [ ] Add `animate-pulse` loading skeletons to dashboard, history, stats.
-- [ ] Create reusable `EmptyState.svelte` for exercises, history, dashboard.
-- [ ] Add `ConfirmDialog` to template delete and remove-exercise-from-workout.
-- [ ] Add Svelte transitions to set completion, modal open/close, tab switching.
+- [x] Add `animate-pulse` loading skeletons to dashboard, history, stats.
+- [x] Create reusable `EmptyState.svelte` for exercises, history, dashboard.
+- [x] Add `ConfirmDialog` to template delete and remove-exercise-from-workout.
+- [x] Add Svelte transitions to set completion, modal open/close, tab switching.
 
 ### 3.3 Architecture Violations
 
-- [ ] Fix `ExercisePickerModal.svelte` importing directly from `exercise-repository` — should go through `application/exercises/queries`.
-- [ ] Extract magic numbers (default 3 sets, 8–12 reps, 90s rest, 3-session stagnation threshold) to a `constants.ts`.
+- [x] Fix `ExercisePickerModal.svelte` importing directly from `exercise-repository` — should go through `application/exercises/queries`.
+- [x] Extract magic numbers (default 3 sets, 8–12 reps, 90s rest, 3-session stagnation threshold) to a `constants.ts`.
 
 ### 3.4 Performance
 
-- [ ] Optimize `loadAllData()` in statistics — fetches ALL sessions/sets on every period change. Use indexed Dexie queries with date filters.
-- [ ] Lazy-load Chart.js — currently loads upfront. Dynamically import only when statistics tab opens.
-- [ ] Memoize `buildSetsMap()` — called multiple times with same data.
+- [x] Optimize `loadAllData()` in statistics — fetches ALL sessions/sets on every period change. Use indexed Dexie queries with date filters.
+- [x] Lazy-load Chart.js — currently loads upfront. Dynamically import only when statistics tab opens.
+- [x] Memoize `buildSetsMap()` — called multiple times with same data.
 
 ### 3.5 Testing
 
-- [ ] Set up test infrastructure (`vitest` + `@testing-library/svelte`).
-- [ ] Add tests for `progression.ts` (domain logic).
-- [ ] Add tests for statistics queries (date calculations).
-- [ ] Add tests for plate calculator.
+- [x] Set up test infrastructure (`vitest` + `@testing-library/svelte`).
+- [x] Add tests for `progression.ts` (domain logic).
+- [x] Add tests for statistics queries (date calculations).
+- [x] Add tests for plate calculator.
 
 ### 3.6 Accessibility
 
-- [ ] Add ARIA labels to interactive elements (modals, switches).
-- [ ] Fix `a11y_click_events_have_key_events` suppressed in `ExercisePickerModal`.
-- [ ] Add `prefers-reduced-motion` support.
-- [ ] Audit touch targets for 48px minimum (gym use with sweaty hands).
-- [ ] Respect system font size.
+- [x] Add ARIA labels to interactive elements (modals, switches).
+- [x] Fix `a11y_click_events_have_key_events` suppressed in `ExercisePickerModal`.
+- [x] Add `prefers-reduced-motion` support.
+- [x] Audit touch targets for 48px minimum (gym use with sweaty hands).
+- [x] Respect system font size.
 
 ### 3.7 PWA Quality
 
-- [ ] Change `skipWaiting: true` to `false` in service worker config — could break active users mid-workout.
-- [ ] Add "Add to Home Screen" install prompt.
-- [ ] Add maskable icon and 180px Apple touch icon.
-- [ ] Add offline status indicator in the UI.
+- [x] Change `skipWaiting: true` to `false` in service worker config — could break active users mid-workout.
+- [x] Add "Add to Home Screen" install prompt.
+- [x] Add maskable icon and 180px Apple touch icon.
+- [x] Add offline status indicator in the UI.
 
 ---
 
@@ -126,8 +126,8 @@ All of these work fully offline — no backend needed.
 - [ ] Stepper +/- controls for weight/reps
 - [ ] Quick-duplicate last set button
 - [ ] Per-exercise elapsed time display
-- [ ] Loading skeletons + empty states
-- [ ] Error handling in async operations
+- [x] Loading skeletons + empty states
+- [x] Error handling in async operations
 
 ### Phase 2 — High-Impact Features (3–5 days each)
 
@@ -141,12 +141,12 @@ All of these work fully offline — no backend needed.
 
 ### Phase 3 — Polish & Infrastructure
 
-- [ ] Add vitest + test the domain layer
-- [ ] Lazy-load Chart.js
-- [ ] Optimize statistics queries with date-indexed Dexie queries
-- [ ] Accessibility audit (ARIA, touch targets, reduced motion)
-- [ ] PWA install prompt + offline indicator
-- [ ] Fix service worker `skipWaiting` behavior
+- [x] Add vitest + test the domain layer
+- [x] Lazy-load Chart.js
+- [x] Optimize statistics queries with date-indexed Dexie queries
+- [x] Accessibility audit (ARIA, touch targets, reduced motion)
+- [x] PWA install prompt + offline indicator
+- [x] Fix service worker `skipWaiting` behavior
 
 ---
 

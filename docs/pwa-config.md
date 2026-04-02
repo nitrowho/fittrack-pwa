@@ -18,9 +18,9 @@ manifest: {
   background_color: '#000000',
   theme_color: '#000000',
   icons: [
-    { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-    { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-    { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+    { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: 'icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
   ]
 }
 ```
@@ -41,7 +41,7 @@ SvelteKitPWA({
   workbox: {
     globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
     clientsClaim: true,
-    skipWaiting: true
+    skipWaiting: false
   }
 })
 ```
@@ -52,6 +52,8 @@ Implications:
 - There is no runtime API caching layer because the app has no backend
 - New versions are not forced immediately; the UI shows an update prompt
 - The app shows a one-time "Bereit für Offline-Nutzung" toast when offline caching is ready
+- The app surfaces an install prompt when the browser supports `beforeinstallprompt`
+- The app shows an offline banner while the device is disconnected
 
 ## iOS Install Support
 
@@ -70,6 +72,7 @@ Checked-in PWA-related assets currently include:
 
 - `static/icons/icon-192.png`
 - `static/icons/icon-512.png`
+- `static/icons/icon-512-maskable.png`
 - `static/apple-touch-icon.png`
 - `static/favicon.png`
 - `static/splash/*.png`

@@ -25,7 +25,6 @@ Current product characteristics:
 - Multi-device sync
 - Authentication
 - Server-side rendering
-- A dedicated automated test suite
 
 ## Tech Stack
 
@@ -67,6 +66,10 @@ pnpm run dev
 pnpm run build
 pnpm run preview
 pnpm run check
+pnpm test
 ```
 
-`pnpm run check` is the main validation command today. There is currently no Vitest or Playwright setup in the repository.
+Validation commands today:
+
+- `pnpm run check` for Svelte + TypeScript diagnostics
+- `pnpm test` for Vitest coverage of domain logic and statistics queries
