@@ -20,8 +20,8 @@
 	let { exercises }: Props = $props();
 
 	let selectedIndex = $state(0);
-	let canvas = $state<HTMLCanvasElement>();
-	let chart = $state<Chart | null>(null);
+	let canvas = $state<HTMLCanvasElement | undefined>();
+	let chart: Chart | null = null;
 
 	let selected = $derived(exercises[selectedIndex] ?? null);
 
@@ -41,7 +41,7 @@
 
 	function createChart() {
 		if (!canvas || !selected) return;
-		if (chart) chart.destroy();
+		chart?.destroy();
 
 		const colors = getColors();
 		const history = selected.history;
@@ -105,7 +105,6 @@
 	}
 
 	onMount(() => {
-		createChart();
 		mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 		mediaQuery.addEventListener('change', handleColorSchemeChange);
 	});
@@ -116,9 +115,18 @@
 	});
 
 	$effect(() => {
+		if (selectedIndex >= exercises.length && exercises.length > 0) {
+			selectedIndex = 0;
+			return;
+		}
+
 		if (canvas && selected) {
 			createChart();
+			return;
 		}
+
+		chart?.destroy();
+		chart = null;
 	});
 </script>
 
