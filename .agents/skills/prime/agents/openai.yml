@@ -1,0 +1,3 @@
+interface:
+  display_name: "Prime"
+  short_description: "Loads project context and summarizes the repo before implementation."
