@@ -27,6 +27,22 @@ describe('calculatePlates', () => {
 			belowBarWeight: true
 		});
 	});
+
+	it('finds a combination when greedy would fail (63 kg with 15 kg bar)', () => {
+		const config: PlateConfig = {
+			barWeight: 15,
+			plates: [
+				{ weight: 15, quantity: 2 },
+				{ weight: 5, quantity: 6 },
+				{ weight: 2.5, quantity: 4 },
+				{ weight: 1.25, quantity: 2 },
+				{ weight: 0.5, quantity: 8 }
+			]
+		};
+		const result = calculatePlates(63, config);
+		expect(result.impossible).toBe(false);
+		expect(result.totalWeight).toBe(63);
+	});
 });
 
 describe('findNearestAchievable', () => {
