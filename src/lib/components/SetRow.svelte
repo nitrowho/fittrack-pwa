@@ -56,7 +56,7 @@
 	{#if isBarbell && set.weight > 0 && onopenplatecalc}
 		<button
 			onclick={() => onopenplatecalc!(set.weight)}
-			class="flex h-6 w-6 items-center justify-center rounded-full text-gray-400 hover:text-blue-500"
+			class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-400 hover:text-blue-500"
 			aria-label="Hantelscheiben-Rechner"
 		>
 			<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -82,7 +82,7 @@
 
 	<button
 		onclick={handleToggle}
-		class="ml-auto flex h-12 w-12 items-center justify-center rounded-full transition-colors {set.isCompleted
+		class="ml-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors {set.isCompleted
 			? 'bg-green-500 text-white'
 			: 'border-2 border-gray-300 dark:border-gray-600'}"
 		aria-label={set.isCompleted ? 'Satz rückgängig' : 'Satz abschließen'}
