@@ -39,7 +39,7 @@
 
 	$effect(() => {
 		if (prs.length > 0) {
-			const timer = setTimeout(ondismiss, 4000);
+			const timer = setTimeout(ondismiss, 5000);
 			return () => clearTimeout(timer);
 		}
 	});
@@ -63,7 +63,8 @@
 	<!-- Toast -->
 	<button
 		type="button"
-		class="fixed inset-x-4 top-4 z-50 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 p-4 text-left shadow-lg"
+		class="fixed inset-x-4 z-50 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 p-4 text-left shadow-lg"
+		style:top="calc(env(safe-area-inset-top, 0px) + 1rem)"
 		in:fly={{ y: -60, duration: 400 }}
 		out:fade={{ duration: 200 }}
 		onclick={ondismiss}
