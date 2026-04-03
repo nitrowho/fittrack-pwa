@@ -236,142 +236,146 @@
 			</div>
 		</section>
 
-	<!-- Hantelscheiben -->
-	{#if plateConfigLoaded}
-		<section class="space-y-3">
-			<div class="rounded-2xl bg-white shadow-sm dark:bg-gray-900">
-				<button
-					onclick={() => (plateExpanded = !plateExpanded)}
-					class="flex w-full items-center justify-between p-4"
-				>
-					<h2 class="text-lg font-semibold">Hantelscheiben</h2>
-					<svg
-						class="h-5 w-5 text-gray-400 transition-transform {plateExpanded ? 'rotate-180' : ''}"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-						stroke-width="2"
+		<!-- Hantelscheiben -->
+		{#if plateConfigLoaded}
+			<section class="space-y-3">
+				<h2 class="text-lg font-semibold">Hantelscheiben</h2>
+				<div class="rounded-2xl bg-white shadow-sm dark:bg-gray-900">
+					<button
+						onclick={() => (plateExpanded = !plateExpanded)}
+						class="flex w-full items-center justify-between p-4"
 					>
-						<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-					</svg>
-				</button>
-
-				{#if plateExpanded}
-					<div class="space-y-4 px-4 pb-4">
-						<label class="block">
-							<span class="text-sm font-medium">Stangengewicht (kg)</span>
-							<input
-								type="number"
-								step="0.5"
-								inputmode="decimal"
-								bind:value={plateBarWeight}
-								class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-							/>
-						</label>
-
 						<div>
-							<h4 class="mb-2 text-sm font-medium">Verfügbare Scheiben</h4>
-							<div class="space-y-2">
-								{#each plateDefs as plate}
-									<div class="flex items-center gap-2">
-										<span class="w-20 text-sm font-medium">{formatWeightPrecise(plate.weight)}</span>
-										<input
-											type="number"
-											inputmode="numeric"
-											placeholder="∞"
-											value={plate.quantity ?? ''}
-											onchange={(e: Event) => handlePlateQuantityChange(plate.weight, (e.target as HTMLInputElement).value)}
-											class="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
-											aria-label="Anzahl {formatWeightPrecise(plate.weight)} Scheiben"
-										/>
-										<span class="text-xs text-gray-400">Stk.</span>
-										<button
-											onclick={() => handleRemovePlate(plate.weight)}
-											class="ml-auto p-1 text-red-500"
-											aria-label="Scheibe entfernen"
-										>
-											<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-												<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-											</svg>
-										</button>
-									</div>
-								{/each}
-							</div>
-
-							<div class="mt-3 flex gap-2">
-								<input
-									type="text"
-									inputmode="decimal"
-									placeholder="Neue Scheibe (kg)"
-									bind:value={newPlateWeight}
-									onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter') handleAddPlate(); }}
-									class="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-								/>
-								<button
-									onclick={handleAddPlate}
-									class="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium dark:bg-gray-800"
-								>
-									Hinzufügen
-								</button>
-							</div>
+							<h3 class="text-sm font-medium">Scheiben konfigurieren</h3>
+							<p class="mt-0.5 text-xs text-gray-500">Stange: {formatWeightPrecise(plateBarWeight)}, {plateDefs.length} Scheiben</p>
 						</div>
-
-						<button
-							onclick={handleSavePlateConfig}
-							class="w-full rounded-xl bg-blue-500 py-2 text-sm font-medium text-white"
+						<svg
+							class="h-5 w-5 text-gray-400 transition-transform {plateExpanded ? 'rotate-180' : ''}"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+							stroke-width="2"
 						>
-							{plateSaveMessage || 'Speichern'}
-						</button>
-					</div>
-				{/if}
+							<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+						</svg>
+					</button>
+
+					{#if plateExpanded}
+						<div class="space-y-4 border-t border-gray-100 px-4 pb-4 pt-4 dark:border-gray-800">
+							<label class="block">
+								<span class="text-sm font-medium">Stangengewicht (kg)</span>
+								<input
+									type="number"
+									step="0.5"
+									inputmode="decimal"
+									bind:value={plateBarWeight}
+									class="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+								/>
+							</label>
+
+							<div>
+								<h4 class="mb-2 text-sm font-medium">Verfügbare Scheiben</h4>
+								<div class="space-y-2">
+									{#each plateDefs as plate}
+										<div class="flex items-center gap-2">
+											<span class="w-20 text-sm font-medium">{formatWeightPrecise(plate.weight)}</span>
+											<input
+												type="number"
+												inputmode="numeric"
+												placeholder="∞"
+												value={plate.quantity ?? ''}
+												onchange={(e: Event) => handlePlateQuantityChange(plate.weight, (e.target as HTMLInputElement).value)}
+												class="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-center text-sm dark:border-gray-700 dark:bg-gray-800"
+												aria-label="Anzahl {formatWeightPrecise(plate.weight)} Scheiben"
+											/>
+											<span class="text-xs text-gray-400">Stk.</span>
+											<button
+												onclick={() => handleRemovePlate(plate.weight)}
+												class="ml-auto p-1 text-red-500"
+												aria-label="Scheibe entfernen"
+											>
+												<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+													<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+												</svg>
+											</button>
+										</div>
+									{/each}
+								</div>
+
+								<div class="mt-3 flex gap-2">
+									<input
+										type="text"
+										inputmode="decimal"
+										placeholder="Neue Scheibe (kg)"
+										bind:value={newPlateWeight}
+										onkeydown={(e: KeyboardEvent) => { if (e.key === 'Enter') handleAddPlate(); }}
+										class="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+									/>
+									<button
+										onclick={handleAddPlate}
+										class="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium dark:bg-gray-800"
+									>
+										Hinzufügen
+									</button>
+								</div>
+							</div>
+
+							<button
+								onclick={handleSavePlateConfig}
+								class="w-full rounded-xl bg-blue-500 py-2 text-sm font-medium text-white"
+							>
+								{plateSaveMessage || 'Speichern'}
+							</button>
+						</div>
+					{/if}
+				</div>
+			</section>
+		{/if}
+
+		<!-- Backup -->
+		<section class="space-y-3">
+			<h2 class="text-lg font-semibold">Backup</h2>
+			<div class={`rounded-2xl p-4 text-sm ${storageStatus.classes}`}>
+				<h3 class="font-medium">{storageStatus.title}</h3>
+				<p class="mt-1 text-xs opacity-80">{storageStatus.description}</p>
 			</div>
+			<button
+				onclick={handleBackup}
+				class="w-full rounded-2xl bg-white p-4 text-left shadow-sm dark:bg-gray-900"
+			>
+				<h3 class="font-medium">Backup erstellen</h3>
+				<p class="mt-0.5 text-xs text-gray-500">Alle Daten als JSON-Datei exportieren</p>
+			</button>
+			<label class="block w-full cursor-pointer rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
+				<h3 class="font-medium">Backup wiederherstellen</h3>
+				<p class="mt-0.5 text-xs text-gray-500">JSON-Backup importieren (ersetzt alle Daten)</p>
+				<input type="file" accept=".json" onchange={handleFileSelect} class="hidden" />
+			</label>
 		</section>
-	{/if}
 
-	<!-- Backup -->
-	<section class="space-y-3">
-		<h2 class="text-lg font-semibold">Backup</h2>
-		<div class={`rounded-2xl p-4 text-sm ${storageStatus.classes}`}>
-			<h3 class="font-medium">{storageStatus.title}</h3>
-			<p class="mt-1 text-xs opacity-80">{storageStatus.description}</p>
-		</div>
-		<button
-			onclick={handleBackup}
-			class="w-full rounded-2xl bg-white p-4 text-left shadow-sm dark:bg-gray-900"
-		>
-			<h3 class="font-medium">Backup erstellen</h3>
-			<p class="mt-0.5 text-xs text-gray-500">Alle Daten als JSON-Datei exportieren</p>
-		</button>
-		<label class="block w-full cursor-pointer rounded-2xl bg-white p-4 shadow-sm dark:bg-gray-900">
-			<h3 class="font-medium">Backup wiederherstellen</h3>
-			<p class="mt-0.5 text-xs text-gray-500">JSON-Backup importieren (ersetzt alle Daten)</p>
-			<input type="file" accept=".json" onchange={handleFileSelect} class="hidden" />
-		</label>
-	</section>
+		<!-- Export -->
+		<section class="space-y-3">
+			<h2 class="text-lg font-semibold">Daten exportieren</h2>
+			<button
+				onclick={handleExportCSV}
+				class="w-full rounded-2xl bg-white p-4 text-left shadow-sm dark:bg-gray-900"
+			>
+				<h3 class="font-medium">CSV exportieren</h3>
+				<p class="mt-0.5 text-xs text-gray-500">Abgeschlossene Einheiten als CSV-Datei</p>
+			</button>
+			<button
+				onclick={handleExportJSON}
+				class="w-full rounded-2xl bg-white p-4 text-left shadow-sm dark:bg-gray-900"
+			>
+				<h3 class="font-medium">JSON exportieren</h3>
+				<p class="mt-0.5 text-xs text-gray-500">Abgeschlossene Einheiten als JSON-Datei</p>
+			</button>
+		</section>
 
-	<!-- Export -->
-	<section class="space-y-3">
-		<h2 class="text-lg font-semibold">Daten exportieren</h2>
-		<button
-			onclick={handleExportCSV}
-			class="w-full rounded-2xl bg-white p-4 text-left shadow-sm dark:bg-gray-900"
-		>
-			<h3 class="font-medium">CSV exportieren</h3>
-			<p class="mt-0.5 text-xs text-gray-500">Abgeschlossene Einheiten als CSV-Datei</p>
-		</button>
-		<button
-			onclick={handleExportJSON}
-			class="w-full rounded-2xl bg-white p-4 text-left shadow-sm dark:bg-gray-900"
-		>
-			<h3 class="font-medium">JSON exportieren</h3>
-			<p class="mt-0.5 text-xs text-gray-500">Abgeschlossene Einheiten als JSON-Datei</p>
-		</button>
-	</section>
-
-	<!-- About -->
-	<section>
-		<p class="text-center text-xs text-gray-400">FitTrack PWA v{__APP_VERSION__}</p>
-	</section>
+		<!-- About -->
+		<section>
+			<p class="text-center text-xs text-gray-400">FitTrack PWA v{__APP_VERSION__}</p>
+		</section>
 	</ErrorBoundary>
 </div>
 
