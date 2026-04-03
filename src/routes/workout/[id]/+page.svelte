@@ -93,10 +93,7 @@
 			return sets.some((s) => s.id === setId);
 		});
 		if (exerciseSession) {
-			const currentSetIds = new Set(
-				Array.from(workoutStore.sets.values()).flatMap((sets) => sets.map((s) => s.id))
-			);
-			const prs = await checkForPRs(exerciseSession.exerciseId, weight, reps, currentSetIds);
+			const prs = await checkForPRs(exerciseSession.exerciseId, weight, reps, new Set([setId]));
 			if (prs.length > 0) {
 				prExerciseName = exerciseSession.exerciseName;
 				activePRs = prs;
